@@ -1,0 +1,2690 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="theme-color" content="#1a237e"/>
+<title>Scripture — Complete Bible App</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons+Round"/>
+
+<style>
+  :root {
+    --md-primary: #1a237e;
+    --md-primary-light: #534bae;
+    --md-primary-dark: #000051;
+    --md-secondary: #b8860b;
+    --md-secondary-light: #f5c842;
+    --md-surface: #ffffff;
+    --md-surface-variant: #f5f5f5;
+    --md-on-surface: #1c1b1f;
+    --md-on-surface-variant: #49454f;
+    --md-outline: #79747e;
+    --md-shadow: rgba(0,0,0,0.12);
+    --md-scrim: rgba(0,0,0,0.32);
+    --md-error: #b3261e;
+    --reader-bg: #faf8f3;
+    --reader-text: #2d2a22;
+    --reader-verse-num: #8b6914;
+    --reader-highlight-y: rgba(255,235,59,0.45);
+    --reader-highlight-g: rgba(76,175,80,0.35);
+    --reader-highlight-b: rgba(33,150,243,0.35);
+    --reader-highlight-p: rgba(156,39,176,0.35);
+    --reader-highlight-r: rgba(244,67,54,0.35);
+    --nav-height: 64px;
+    --sidebar-width: 320px;
+    --font-reader: 'Merriweather', Georgia, serif;
+    --font-ui: 'Inter', system-ui, sans-serif;
+    --font-size-reader: 17px;
+    --line-height-reader: 1.85;
+    --letter-spacing-reader: 0.01em;
+  }
+  [data-theme="dark"] {
+    --md-primary: #9fa8da;
+    --md-primary-light: #d1d9ff;
+    --md-primary-dark: #6f79a8;
+    --md-secondary: #f5c842;
+    --md-surface: #1c1b1f;
+    --md-surface-variant: #2b2930;
+    --md-on-surface: #e6e1e5;
+    --md-on-surface-variant: #cac4d0;
+    --md-outline: #938f99;
+    --md-shadow: rgba(0,0,0,0.4);
+    --md-scrim: rgba(0,0,0,0.6);
+    --reader-bg: #1a1814;
+    --reader-text: #e8e0cc;
+    --reader-verse-num: #c9a84c;
+    --reader-highlight-y: rgba(255,235,59,0.25);
+    --reader-highlight-g: rgba(76,175,80,0.22);
+    --reader-highlight-b: rgba(33,150,243,0.22);
+    --reader-highlight-p: rgba(156,39,176,0.22);
+    --reader-highlight-r: rgba(244,67,54,0.22);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; font-family: var(--font-ui); background: var(--md-surface); color: var(--md-on-surface); }
+  .material-icons-round { font-family: 'Material Icons Round'; font-weight: normal; font-style: normal; font-size: 24px; line-height: 1; letter-spacing: normal; text-transform: none; display: inline-block; white-space: nowrap; word-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; user-select: none; }
+
+  /* ========== APP SHELL ========== */
+  #app { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; background: var(--md-surface); }
+  #top-bar { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; height: 64px; min-height: 64px; background: var(--md-primary); color: #fff; z-index: 100; box-shadow: 0 2px 8px var(--md-shadow); }
+  [data-theme="dark"] #top-bar { background: #12111a; border-bottom: 1px solid #2b2930; }
+  #top-bar .logo { font-family: 'Crimson Pro', serif; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; color: #fff; flex-shrink: 0; }
+  #top-bar .spacer { flex: 1; }
+  .icon-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; }
+  .icon-btn:hover { background: rgba(255,255,255,0.12); }
+  .icon-btn:active { background: rgba(255,255,255,0.22); }
+  [data-theme="dark"] .icon-btn { color: var(--md-on-surface); }
+
+  /* ========== MAIN LAYOUT ========== */
+  #main-layout { display: flex; flex: 1; overflow: hidden; }
+  #sidebar { width: 0; min-width: 0; overflow: hidden; background: var(--md-surface-variant); border-right: 1px solid var(--md-outline); transition: width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s; display: flex; flex-direction: column; z-index: 50; }
+  #sidebar.open { width: var(--sidebar-width); min-width: var(--sidebar-width); }
+  #content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #right-panel { width: 0; min-width: 0; overflow: hidden; background: var(--md-surface-variant); border-left: 1px solid var(--md-outline); transition: width 0.28s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+  #right-panel.open { width: 380px; min-width: 380px; }
+
+  /* ========== BOTTOM NAV (MOBILE) ========== */
+  #bottom-nav { display: flex; height: 64px; min-height: 64px; background: var(--md-surface); border-top: 1px solid rgba(0,0,0,0.1); z-index: 100; }
+  [data-theme="dark"] #bottom-nav { border-top: 1px solid #2b2930; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; cursor: pointer; color: var(--md-on-surface-variant); transition: color 0.2s; border: none; background: transparent; padding: 4px 0; min-height: 48px; }
+  .nav-item.active { color: var(--md-primary); }
+  [data-theme="dark"] .nav-item.active { color: var(--md-primary-light); }
+  .nav-item .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.3px; }
+  .nav-indicator { width: 64px; height: 32px; border-radius: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.2s; }
+  .nav-item.active .nav-indicator { background: rgba(26,35,126,0.12); }
+  [data-theme="dark"] .nav-item.active .nav-indicator { background: rgba(159,168,218,0.16); }
+
+  /* ========== SIDEBAR CONTENT ========== */
+  .sidebar-inner { width: var(--sidebar-width); display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+  .sidebar-header { padding: 16px; font-size: 13px; font-weight: 600; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--md-outline); display: flex; align-items: center; gap: 8px; }
+  .sidebar-search { padding: 12px; border-bottom: 1px solid var(--md-outline); }
+  .search-field { display: flex; align-items: center; gap: 8px; background: var(--md-surface); border: 1px solid var(--md-outline); border-radius: 28px; padding: 0 16px; height: 44px; }
+  .search-field input { border: none; background: transparent; flex: 1; font-size: 14px; color: var(--md-on-surface); outline: none; }
+  .search-field .material-icons-round { color: var(--md-on-surface-variant); font-size: 20px; }
+  .book-list { flex: 1; overflow-y: auto; }
+  .book-list::-webkit-scrollbar { width: 4px; }
+  .book-list::-webkit-scrollbar-track { background: transparent; }
+  .book-list::-webkit-scrollbar-thumb { background: var(--md-outline); border-radius: 2px; }
+  .testament-label { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; color: var(--md-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
+  .book-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; border-radius: 4px; margin: 1px 4px; transition: background 0.15s; color: var(--md-on-surface); font-size: 14px; }
+  .book-item:hover { background: rgba(0,0,0,0.05); }
+  [data-theme="dark"] .book-item:hover { background: rgba(255,255,255,0.05); }
+  .book-item.active { background: rgba(26,35,126,0.12); color: var(--md-primary); font-weight: 600; }
+  [data-theme="dark"] .book-item.active { background: rgba(159,168,218,0.16); color: var(--md-primary-light); }
+  .book-item .book-abbr { font-size: 11px; color: var(--md-on-surface-variant); width: 32px; flex-shrink: 0; }
+
+  /* ========== READER ========== */
+  #reader-area { flex: 1; overflow-y: auto; background: var(--reader-bg); scroll-behavior: smooth; position: relative; }
+  #reader-area::-webkit-scrollbar { width: 6px; }
+  #reader-area::-webkit-scrollbar-track { background: transparent; }
+  #reader-area::-webkit-scrollbar-thumb { background: var(--md-outline); border-radius: 3px; }
+  .reader-controls { display: flex; align-items: center; gap: 8px; padding: 12px 16px; background: var(--md-surface); border-bottom: 1px solid rgba(0,0,0,0.08); flex-wrap: wrap; z-index: 20; position: sticky; top: 0; }
+  [data-theme="dark"] .reader-controls { background: var(--md-surface); border-bottom: 1px solid #2b2930; }
+  .chapter-title { font-family: 'Crimson Pro', serif; font-size: 24px; font-weight: 600; color: var(--md-on-surface); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chapter-nav-btn { width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--md-outline); background: var(--md-surface); color: var(--md-on-surface); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .chapter-nav-btn:hover { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+  .reader-content { max-width: 720px; margin: 0 auto; padding: 24px 20px 120px; font-family: var(--font-reader); font-size: var(--font-size-reader); line-height: var(--line-height-reader); letter-spacing: var(--letter-spacing-reader); color: var(--reader-text); }
+  .verse-row { display: flex; gap: 6px; margin-bottom: 2px; padding: 4px 6px; border-radius: 6px; cursor: pointer; transition: background 0.15s; position: relative; }
+  .verse-row:hover { background: rgba(0,0,0,0.04); }
+  [data-theme="dark"] .verse-row:hover { background: rgba(255,255,255,0.04); }
+  .verse-row.selected { background: rgba(26,35,126,0.1); }
+  .verse-num { font-size: 11px; font-weight: 700; color: var(--reader-verse-num); min-width: 22px; padding-top: 4px; line-height: 1; flex-shrink: 0; font-family: var(--font-ui); }
+  .verse-text { flex: 1; }
+  .highlight-y { background: var(--reader-highlight-y) !important; border-radius: 3px; }
+  .highlight-g { background: var(--reader-highlight-g) !important; border-radius: 3px; }
+  .highlight-b { background: var(--reader-highlight-b) !important; border-radius: 3px; }
+  .highlight-p { background: var(--reader-highlight-p) !important; border-radius: 3px; }
+  .highlight-r { background: var(--reader-highlight-r) !important; border-radius: 3px; }
+  .verse-note-dot { width: 8px; height: 8px; background: var(--md-secondary); border-radius: 50%; margin-top: 7px; flex-shrink: 0; }
+  .chapter-heading { font-family: 'Crimson Pro', serif; font-size: 28px; font-weight: 600; color: var(--md-on-surface); margin: 32px 0 16px; text-align: center; }
+  .section-heading { font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--reader-verse-num); text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 8px; }
+
+  /* ========== CONTEXT MENU ========== */
+  .context-menu { position: fixed; background: var(--md-surface); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 1000; min-width: 240px; overflow: hidden; border: 1px solid var(--md-outline); animation: menuIn 0.15s ease; }
+  @keyframes menuIn { from { opacity: 0; transform: scale(0.9) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+  .context-menu-header { padding: 12px 16px 8px; font-size: 12px; color: var(--md-on-surface-variant); font-weight: 600; border-bottom: 1px solid var(--md-outline); }
+  .context-colors { display: flex; gap: 10px; padding: 12px 16px; }
+  .color-chip { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: transform 0.15s; border: 2px solid transparent; }
+  .color-chip:hover { transform: scale(1.18); }
+  .color-chip.y { background: #fdd835; } .color-chip.g { background: #4caf50; } .color-chip.b { background: #2196f3; } .color-chip.p { background: #9c27b0; } .color-chip.r { background: #f44336; } .color-chip.x { background: var(--md-surface-variant); border: 1px solid var(--md-outline); }
+  .context-actions { border-top: 1px solid var(--md-outline); }
+  .context-action { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; color: var(--md-on-surface); font-size: 14px; transition: background 0.15s; }
+  .context-action:hover { background: var(--md-surface-variant); }
+  .context-action .material-icons-round { font-size: 20px; color: var(--md-on-surface-variant); }
+
+  /* ========== CHAPTER PICKER ========== */
+  .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; padding: 16px; }
+  .ch-btn { height: 44px; border-radius: 8px; border: 1px solid var(--md-outline); background: var(--md-surface); color: var(--md-on-surface); cursor: pointer; font-size: 14px; font-weight: 500; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .ch-btn:hover { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+  .ch-btn.active { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+  [data-theme="dark"] .ch-btn:hover, [data-theme="dark"] .ch-btn.active { background: var(--md-primary-light); color: #12111a; border-color: var(--md-primary-light); }
+
+  /* ========== MODAL & SHEETS ========== */
+  .modal-overlay { position: fixed; inset: 0; background: var(--md-scrim); z-index: 900; display: flex; align-items: flex-end; justify-content: center; animation: overlayIn 0.2s ease; }
+  .modal-overlay.centered { align-items: center; }
+  @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
+  .bottom-sheet { background: var(--md-surface); border-radius: 28px 28px 0 0; width: 100%; max-height: 85vh; display: flex; flex-direction: column; animation: sheetIn 0.3s cubic-bezier(0.4,0,0.2,1); overflow: hidden; }
+  @keyframes sheetIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .dialog-card { background: var(--md-surface); border-radius: 20px; width: calc(100% - 32px); max-width: 480px; max-height: 80vh; display: flex; flex-direction: column; animation: dialogIn 0.25s ease; overflow: hidden; }
+  @keyframes dialogIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  .sheet-handle { width: 40px; height: 4px; background: var(--md-outline); border-radius: 2px; margin: 12px auto 4px; flex-shrink: 0; }
+  .sheet-title { font-size: 18px; font-weight: 600; padding: 12px 20px 8px; color: var(--md-on-surface); }
+  .sheet-body { flex: 1; overflow-y: auto; padding: 4px 0 20px; }
+  .sheet-body::-webkit-scrollbar { width: 4px; }
+  .sheet-body::-webkit-scrollbar-thumb { background: var(--md-outline); border-radius: 2px; }
+
+  /* ========== FAB ========== */
+  .fab { position: fixed; bottom: 80px; right: 16px; width: 56px; height: 56px; border-radius: 16px; background: var(--md-secondary); color: #1a0000; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 200; transition: all 0.2s; }
+  .fab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+  .fab-ext { position: fixed; bottom: 80px; right: 16px; height: 56px; border-radius: 16px; background: var(--md-secondary); color: #1a0000; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; padding: 0 20px 0 16px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 200; transition: all 0.2s; font-weight: 600; font-size: 15px; }
+  .fab-ext:hover { transform: translateY(-2px); }
+
+  /* ========== TABS ========== */
+  .tab-bar { display: flex; overflow-x: auto; border-bottom: 1px solid var(--md-outline); background: var(--md-surface); -ms-overflow-style: none; scrollbar-width: none; }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab-item { display: flex; align-items: center; gap: 6px; padding: 0 16px; height: 48px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--md-on-surface-variant); white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; flex-shrink: 0; }
+  .tab-item.active { color: var(--md-primary); border-bottom-color: var(--md-primary); }
+  [data-theme="dark"] .tab-item.active { color: var(--md-primary-light); border-bottom-color: var(--md-primary-light); }
+  .tab-item .material-icons-round { font-size: 18px; }
+
+  /* ========== GENEALOGY TREE ========== */
+  #genealogy-canvas-wrapper { width: 100%; height: 100%; overflow: auto; position: relative; }
+  .gen-tree { position: relative; padding: 20px; min-width: 900px; }
+  .gen-era { margin-bottom: 32px; }
+  .gen-era-title { font-family: var(--font-ui); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--md-secondary); margin-bottom: 12px; padding: 4px 0; border-bottom: 1px dashed var(--md-outline); }
+  .gen-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
+  .gen-node { background: var(--md-surface); border: 2px solid var(--md-primary); border-radius: 12px; padding: 8px 12px; min-width: 100px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
+  .gen-node:hover { background: var(--md-primary); color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px var(--md-shadow); }
+  [data-theme="dark"] .gen-node { background: var(--md-surface-variant); border-color: var(--md-primary-light); color: var(--md-on-surface); }
+  [data-theme="dark"] .gen-node:hover { background: var(--md-primary-light); color: #12111a; }
+  .gen-node .gn-name { font-size: 13px; font-weight: 600; }
+  .gen-node .gn-age { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+  .gen-connector { text-align: center; color: var(--md-on-surface-variant); font-size: 18px; margin: 2px 0; }
+  .gen-node.female { border-color: #e91e63; }
+  .gen-node.female:hover { background: #e91e63; }
+  [data-theme="dark"] .gen-node.female { border-color: #f48fb1; }
+
+  /* ========== MAPS ========== */
+  .map-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
+  .map-svg-wrapper { width: 100%; height: 100%; overflow: auto; }
+  .map-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 30; }
+  .map-btn { width: 40px; height: 40px; border-radius: 10px; background: var(--md-surface); border: 1px solid var(--md-outline); color: var(--md-on-surface); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--md-shadow); transition: all 0.15s; }
+  .map-btn:hover { background: var(--md-primary); color: #fff; }
+  .map-pin { cursor: pointer; transition: transform 0.15s; }
+  .map-pin:hover { transform: scale(1.3); }
+  .map-legend { position: absolute; bottom: 12px; left: 12px; background: var(--md-surface); border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 8px var(--md-shadow); border: 1px solid var(--md-outline); font-size: 12px; max-width: 200px; }
+  .map-legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--md-on-surface); }
+  .map-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .map-tab-bar { display: flex; overflow-x: auto; gap: 6px; padding: 8px 12px; background: var(--md-surface); border-bottom: 1px solid var(--md-outline); -ms-overflow-style: none; scrollbar-width: none; }
+  .map-tab-bar::-webkit-scrollbar { display: none; }
+  .map-tab { padding: 6px 14px; border-radius: 20px; background: var(--md-surface-variant); border: 1px solid var(--md-outline); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.15s; color: var(--md-on-surface); }
+  .map-tab.active { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+
+  /* ========== AI CHAT ========== */
+  .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .chat-messages::-webkit-scrollbar { width: 4px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--md-outline); border-radius: 2px; }
+  .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 18px; font-size: 14px; line-height: 1.5; }
+  .chat-bubble.user { background: var(--md-primary); color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
+  [data-theme="dark"] .chat-bubble.user { background: var(--md-primary-dark); }
+  .chat-bubble.ai { background: var(--md-surface-variant); color: var(--md-on-surface); align-self: flex-start; border-bottom-left-radius: 4px; }
+  .chat-bubble.system { background: transparent; color: var(--md-on-surface-variant); font-size: 12px; text-align: center; align-self: center; max-width: 100%; }
+  .chat-input-row { display: flex; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--md-outline); background: var(--md-surface); align-items: flex-end; }
+  .chat-input { flex: 1; border: 1px solid var(--md-outline); border-radius: 24px; padding: 10px 16px; font-size: 14px; background: var(--md-surface-variant); color: var(--md-on-surface); outline: none; resize: none; max-height: 120px; min-height: 44px; font-family: var(--font-ui); }
+  .chat-input:focus { border-color: var(--md-primary); }
+  .chat-send-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--md-primary); color: #fff; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; flex-shrink: 0; }
+  .chat-send-btn:disabled { background: var(--md-outline); cursor: not-allowed; }
+  .chat-send-btn:hover:not(:disabled) { background: var(--md-primary-light); }
+  .typing-dots { display: flex; gap: 5px; padding: 4px 0; }
+  .typing-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--md-on-surface-variant); animation: dotBounce 1.2s infinite; }
+  .typing-dot:nth-child(2) { animation-delay: 0.15s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes dotBounce { 0%,80%,100% { transform: translateY(0); } 40% { transform: translateY(-7px); } }
+
+  /* ========== CARDS & PANELS ========== */
+  .info-card { background: var(--md-surface); border: 1px solid var(--md-outline); border-radius: 16px; padding: 16px; margin: 8px 12px; }
+  .info-card-title { font-size: 15px; font-weight: 700; color: var(--md-on-surface); margin-bottom: 8px; font-family: 'Crimson Pro', serif; }
+  .info-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .info-label { font-weight: 600; color: var(--md-on-surface-variant); min-width: 90px; flex-shrink: 0; }
+  .info-value { color: var(--md-on-surface); flex: 1; }
+  .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(26,35,126,0.1); color: var(--md-primary); margin: 2px; }
+  [data-theme="dark"] .tag { background: rgba(159,168,218,0.12); color: var(--md-primary-light); }
+  .era-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(184,134,11,0.12); color: var(--md-secondary); margin-bottom: 8px; }
+  .character-card { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin: 6px 12px; background: var(--md-surface); border-radius: 14px; border: 1px solid var(--md-outline); cursor: pointer; transition: all 0.15s; }
+  .character-card:hover { box-shadow: 0 3px 12px var(--md-shadow); transform: translateY(-1px); }
+  .char-avatar { width: 52px; height: 52px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .char-name { font-size: 15px; font-weight: 700; color: var(--md-on-surface); }
+  .char-desc { font-size: 12px; color: var(--md-on-surface-variant); margin-top: 2px; }
+  .char-ref { font-size: 11px; color: var(--md-primary); margin-top: 4px; font-weight: 500; }
+  [data-theme="dark"] .char-ref { color: var(--md-primary-light); }
+
+  /* ========== NOTES ========== */
+  .note-card { background: #fffde7; border: 1px solid #f9a825; border-radius: 12px; padding: 12px 14px; margin: 6px 12px; cursor: pointer; transition: all 0.15s; }
+  [data-theme="dark"] .note-card { background: #2a2600; border-color: #5a4200; }
+  .note-card:hover { box-shadow: 0 3px 12px rgba(249,168,37,0.2); }
+  .note-ref { font-size: 11px; font-weight: 700; color: #f9a825; margin-bottom: 4px; }
+  .note-text { font-size: 13px; color: var(--md-on-surface); line-height: 1.5; }
+  .note-date { font-size: 10px; color: var(--md-on-surface-variant); margin-top: 6px; }
+  .note-textarea { width: 100%; min-height: 120px; border: 1px solid var(--md-outline); border-radius: 12px; padding: 12px; font-size: 14px; background: var(--md-surface); color: var(--md-on-surface); outline: none; resize: vertical; font-family: var(--font-ui); }
+  .note-textarea:focus { border-color: var(--md-secondary); }
+
+  /* ========== BOOKMARKS ========== */
+  .bookmark-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--md-outline); cursor: pointer; transition: background 0.15s; color: var(--md-on-surface); }
+  .bookmark-item:hover { background: var(--md-surface-variant); }
+  .bookmark-ref { font-size: 14px; font-weight: 600; color: var(--md-on-surface); }
+  .bookmark-preview { font-size: 12px; color: var(--md-on-surface-variant); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+  /* ========== SETTINGS PANEL ========== */
+  .settings-section { padding: 12px 16px; border-bottom: 1px solid var(--md-outline); }
+  .settings-title { font-size: 12px; font-weight: 700; color: var(--md-on-surface-variant); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; }
+  .setting-label { font-size: 14px; color: var(--md-on-surface); }
+  .setting-desc { font-size: 12px; color: var(--md-on-surface-variant); margin-top: 1px; }
+  .toggle-switch { width: 48px; height: 26px; border-radius: 13px; background: var(--md-outline); border: none; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle-switch.on { background: var(--md-primary); }
+  [data-theme="dark"] .toggle-switch.on { background: var(--md-primary-light); }
+  .toggle-switch::after { content: ''; width: 20px; height: 20px; border-radius: 50%; background: #fff; position: absolute; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle-switch.on::after { left: 25px; }
+  .font-size-row { display: flex; align-items: center; gap: 8px; }
+  .font-size-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--md-outline); background: var(--md-surface); color: var(--md-on-surface); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; }
+  .font-size-display { font-size: 14px; font-weight: 500; color: var(--md-on-surface); min-width: 40px; text-align: center; }
+  select.md-select { background: var(--md-surface-variant); border: 1px solid var(--md-outline); border-radius: 8px; padding: 6px 10px; font-size: 13px; color: var(--md-on-surface); outline: none; cursor: pointer; }
+
+  /* ========== LOADING ========== */
+  .loading-screen { position: fixed; inset: 0; background: linear-gradient(135deg, #1a237e 0%, #283593 50%, #0d47a1 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; gap: 16px; color: #fff; }
+  .loading-cross { font-size: 64px; animation: pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.95); } }
+  .loading-title { font-family: 'Crimson Pro', serif; font-size: 32px; font-weight: 600; letter-spacing: 1px; }
+  .loading-subtitle { font-size: 14px; opacity: 0.75; letter-spacing: 0.5px; }
+  .loading-bar { width: 200px; height: 3px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+  .loading-progress { height: 100%; background: var(--md-secondary-light); border-radius: 2px; transition: width 0.3s ease; }
+
+  /* ========== TOAST ========== */
+  .toast-container { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 8px; align-items: center; pointer-events: none; }
+  .toast { background: #323232; color: #fff; padding: 10px 20px; border-radius: 24px; font-size: 13px; font-weight: 500; animation: toastIn 0.25s ease; box-shadow: 0 4px 14px rgba(0,0,0,0.25); white-space: nowrap; }
+  @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ========== COMMENTARY PANEL ========== */
+  .commentary-text { font-size: 14px; line-height: 1.7; color: var(--md-on-surface); padding: 12px 16px; }
+  .commentary-verse-ref { font-size: 11px; font-weight: 700; color: var(--md-secondary); margin-bottom: 6px; }
+  .cross-ref-item { display: flex; align-items: flex-start; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--md-outline); cursor: pointer; font-size: 13px; color: var(--md-on-surface); transition: background 0.15s; }
+  .cross-ref-item:hover { background: var(--md-surface-variant); }
+  .cross-ref-badge { font-size: 11px; font-weight: 700; color: var(--md-primary); min-width: 80px; flex-shrink: 0; padding-top: 1px; }
+  [data-theme="dark"] .cross-ref-badge { color: var(--md-primary-light); }
+
+  /* ========== TABLET ADAPTATIONS ========== */
+  @media (min-width: 768px) {
+    #sidebar { width: 280px; min-width: 280px; }
+    #bottom-nav { display: none; }
+    .fab { bottom: 20px; }
+    .fab-ext { bottom: 20px; }
+    .reader-content { padding: 28px 32px 80px; }
+    #right-panel.open { width: 340px; min-width: 340px; }
+    .toast-container { bottom: 24px; }
+  }
+  @media (min-width: 1024px) {
+    #sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); }
+    #right-panel.open { width: 380px; min-width: 380px; }
+  }
+  @media (min-width: 768px) {
+    #top-bar .menu-toggle-sidebar { display: none; }
+  }
+
+  /* ========== SWIPE TRANSITION ========== */
+  .slide-in-right { animation: slideInRight 0.25s ease; }
+  .slide-in-left { animation: slideInLeft 0.25s ease; }
+  @keyframes slideInRight { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: translateX(0); } }
+  @keyframes slideInLeft { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: translateX(0); } }
+
+  /* ========== TIMELINE ========== */
+  .timeline { padding: 16px; position: relative; }
+  .timeline::before { content: ''; position: absolute; left: 36px; top: 0; bottom: 0; width: 2px; background: var(--md-outline); }
+  .timeline-item { display: flex; gap: 12px; margin-bottom: 20px; position: relative; }
+  .timeline-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--md-primary); border: 2px solid var(--md-surface); flex-shrink: 0; margin-top: 5px; margin-left: -1px; z-index: 1; }
+  [data-theme="dark"] .timeline-dot { background: var(--md-primary-light); }
+  .timeline-content { flex: 1; }
+  .timeline-year { font-size: 11px; font-weight: 700; color: var(--md-secondary); }
+  .timeline-event { font-size: 13px; font-weight: 600; color: var(--md-on-surface); }
+  .timeline-desc { font-size: 12px; color: var(--md-on-surface-variant); margin-top: 2px; }
+  .timeline-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--md-surface-variant); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
+
+  /* ========== SEARCH RESULTS ========== */
+  .search-result-item { padding: 12px 16px; border-bottom: 1px solid var(--md-outline); cursor: pointer; transition: background 0.15s; }
+  .search-result-item:hover { background: var(--md-surface-variant); }
+  .search-result-ref { font-size: 12px; font-weight: 700; color: var(--md-primary); margin-bottom: 4px; }
+  [data-theme="dark"] .search-result-ref { color: var(--md-primary-light); }
+  .search-result-text { font-size: 13px; color: var(--md-on-surface); line-height: 1.5; }
+  .search-result-text mark { background: rgba(255,235,59,0.5); color: inherit; border-radius: 2px; }
+
+  /* Utilities */
+  .hidden { display: none !important; }
+  .flex-col { display: flex; flex-direction: column; }
+  .overflow-hidden { overflow: hidden; }
+  .flex-1 { flex: 1; }
+  .scrollable { overflow-y: auto; }
+  .p-4 { padding: 16px; }
+  .text-center { text-align: center; }
+  .font-serif { font-family: 'Crimson Pro', serif; }
+  .divider { height: 1px; background: var(--md-outline); margin: 8px 0; }
+  .badge { background: #e53935; color: #fff; border-radius: 10px; padding: 2px 7px; font-size: 10px; font-weight: 700; }
+  input[type=range] { -webkit-appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--md-outline); outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--md-primary); cursor: pointer; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; border: 1px solid var(--md-outline); background: var(--md-surface); color: var(--md-on-surface); cursor: pointer; transition: all 0.15s; margin: 2px; }
+  .chip:hover, .chip.active { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+  [data-theme="dark"] .chip:hover, [data-theme="dark"] .chip.active { background: var(--md-primary-light); color: #12111a; border-color: var(--md-primary-light); }
+  .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 40px 20px; color: var(--md-on-surface-variant); text-align: center; }
+  .empty-state .material-icons-round { font-size: 48px; opacity: 0.35; }
+  .empty-state p { font-size: 14px; max-width: 220px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<!-- LOADING SCREEN -->
+<div class="loading-screen" id="loading-screen">
+  <div class="loading-cross">✟</div>
+  <div class="loading-title">Scripture</div>
+  <div class="loading-subtitle" id="loading-msg">Initializing Bible Database...</div>
+  <div class="loading-bar"><div class="loading-progress" id="loading-bar" style="width:0%"></div></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- CONTEXT MENU -->
+<div id="context-menu" class="context-menu hidden" style="position:fixed;z-index:1000;">
+  <div class="context-menu-header" id="ctx-header">John 3:16</div>
+  <div class="context-colors">
+    <div class="color-chip y" onclick="applyHighlight('y')" title="Yellow"></div>
+    <div class="color-chip g" onclick="applyHighlight('g')" title="Green"></div>
+    <div class="color-chip b" onclick="applyHighlight('b')" title="Blue"></div>
+    <div class="color-chip p" onclick="applyHighlight('p')" title="Purple"></div>
+    <div class="color-chip r" onclick="applyHighlight('r')" title="Red"></div>
+    <div class="color-chip x" onclick="applyHighlight(null)" title="Remove"></div>
+  </div>
+  <div class="context-actions">
+    <div class="context-action" onclick="bookmarkVerse()"><span class="material-icons-round">bookmark_add</span>Add Bookmark</div>
+    <div class="context-action" onclick="openNoteEditor()"><span class="material-icons-round">edit_note</span>Add Note</div>
+    <div class="context-action" onclick="copyVerse()"><span class="material-icons-round">content_copy</span>Copy Verse</div>
+    <div class="context-action" onclick="shareVerse()"><span class="material-icons-round">share</span>Share</div>
+    <div class="context-action" onclick="closeContextMenu()"><span class="material-icons-round">close</span>Close</div>
+  </div>
+</div>
+
+<!-- MODALS CONTAINER -->
+<div id="modals"></div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div id="top-bar">
+    <button class="icon-btn menu-toggle-sidebar" onclick="toggleSidebar()" aria-label="Menu">
+      <span class="material-icons-round">menu</span>
+    </button>
+    <div class="logo">✟ Scripture</div>
+    <div class="spacer"></div>
+    <button class="icon-btn" onclick="openSearchModal()" aria-label="Search">
+      <span class="material-icons-round">search</span>
+    </button>
+    <button class="icon-btn" onclick="toggleRightPanel()" aria-label="Commentary" id="commentary-toggle">
+      <span class="material-icons-round">chrome_reader_mode</span>
+    </button>
+    <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme" id="theme-btn">
+      <span class="material-icons-round">dark_mode</span>
+    </button>
+    <button class="icon-btn" onclick="openSettings()" aria-label="Settings">
+      <span class="material-icons-round">settings</span>
+    </button>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div id="main-layout">
+    <!-- LEFT SIDEBAR: Book Navigator -->
+    <div id="sidebar">
+      <div class="sidebar-inner">
+        <div class="sidebar-header">
+          <span class="material-icons-round" style="font-size:16px;color:var(--md-secondary)">menu_book</span>
+          Books of the Bible
+        </div>
+        <div class="sidebar-search">
+          <div class="search-field">
+            <span class="material-icons-round">search</span>
+            <input type="text" placeholder="Filter books..." id="book-filter" oninput="filterBooks(this.value)"/>
+          </div>
+        </div>
+        <div class="book-list" id="book-list"></div>
+      </div>
+    </div>
+
+    <!-- CONTENT AREA -->
+    <div id="content-area">
+      <!-- MODULE VIEWS -->
+      <div id="view-reader" class="flex-col flex-1 overflow-hidden">
+        <!-- Reader Controls -->
+        <div class="reader-controls">
+          <button class="chapter-nav-btn" onclick="navigateChapter(-1)" aria-label="Previous chapter">
+            <span class="material-icons-round">chevron_left</span>
+          </button>
+          <div style="flex:1;min-width:0;">
+            <div class="chapter-title" id="chapter-display" onclick="openChapterPicker()">Genesis 1</div>
+            <div style="font-size:11px;color:var(--md-on-surface-variant);margin-top:1px;">ESV · Click to navigate</div>
+          </div>
+          <button class="chapter-nav-btn" onclick="navigateChapter(1)" aria-label="Next chapter">
+            <span class="material-icons-round">chevron_right</span>
+          </button>
+          <button class="chapter-nav-btn" onclick="toggleBookmark()" id="bookmark-btn" aria-label="Bookmark">
+            <span class="material-icons-round">bookmark_border</span>
+          </button>
+        </div>
+        <!-- Reader Content -->
+        <div id="reader-area">
+          <div class="reader-content" id="verse-container"></div>
+        </div>
+      </div>
+
+      <div id="view-genealogy" class="flex-col flex-1 overflow-hidden hidden">
+        <div class="tab-bar" id="genealogy-tabs">
+          <div class="tab-item active" onclick="switchGenealogyTab('tree',this)"><span class="material-icons-round">account_tree</span>Family Tree</div>
+          <div class="tab-item" onclick="switchGenealogyTab('characters',this)"><span class="material-icons-round">people</span>Characters</div>
+          <div class="tab-item" onclick="switchGenealogyTab('timeline',this)"><span class="material-icons-round">timeline</span>Timeline</div>
+          <div class="tab-item" onclick="switchGenealogyTab('ages',this)"><span class="material-icons-round">hourglass_top</span>Ages</div>
+        </div>
+        <div id="genealogy-content" class="flex-1 overflow-hidden"></div>
+      </div>
+
+      <div id="view-maps" class="flex-col flex-1 overflow-hidden hidden">
+        <div class="map-tab-bar" id="map-tabs"></div>
+        <div id="map-content" class="flex-1 overflow-hidden" style="position:relative;"></div>
+      </div>
+
+      <div id="view-ai" class="flex-col flex-1 overflow-hidden hidden" style="background:var(--md-surface-variant);">
+        <div style="padding:12px 16px;background:var(--md-surface);border-bottom:1px solid var(--md-outline);display:flex;align-items:center;gap:10px;">
+          <span style="font-size:28px;">🤖</span>
+          <div>
+            <div style="font-size:15px;font-weight:700;color:var(--md-on-surface);">AI Bible Scholar</div>
+            <div style="font-size:12px;color:var(--md-on-surface-variant);">Powered by OpenAI / Gemini</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="icon-btn" onclick="openAISettings()" style="color:var(--md-on-surface-variant);">
+            <span class="material-icons-round">api</span>
+          </button>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-row">
+          <textarea class="chat-input" id="chat-input" placeholder="Ask about theology, history, cross-references..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat();}"
+            oninput="autoResizeTextarea(this)"></textarea>
+          <button class="chat-send-btn" onclick="sendChat()" id="chat-send">
+            <span class="material-icons-round">send</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="view-notes" class="flex-col flex-1 overflow-hidden hidden">
+        <div class="tab-bar">
+          <div class="tab-item active" onclick="switchNotesTab('notes',this)"><span class="material-icons-round">note</span>Notes</div>
+          <div class="tab-item" onclick="switchNotesTab('bookmarks',this)"><span class="material-icons-round">bookmarks</span>Bookmarks</div>
+          <div class="tab-item" onclick="switchNotesTab('highlights',this)"><span class="material-icons-round">highlight</span>Highlights</div>
+        </div>
+        <div id="notes-content" class="flex-1 overflow-y-auto scrollable"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL: Commentary -->
+    <div id="right-panel">
+      <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--md-outline);background:var(--md-surface);gap:8px;">
+        <span class="material-icons-round" style="color:var(--md-secondary);">library_books</span>
+        <span style="font-size:14px;font-weight:700;color:var(--md-on-surface);">Commentary & Context</span>
+        <div class="spacer"></div>
+        <button class="icon-btn" onclick="toggleRightPanel()" style="color:var(--md-on-surface-variant);width:36px;height:36px;">
+          <span class="material-icons-round" style="font-size:20px;">close</span>
+        </button>
+      </div>
+      <div class="tab-bar" id="right-tabs">
+        <div class="tab-item active" onclick="switchRightTab('commentary',this)">Commentary</div>
+        <div class="tab-item" onclick="switchRightTab('context',this)">Context</div>
+        <div class="tab-item" onclick="switchRightTab('crossrefs',this)">Cross-Refs</div>
+      </div>
+      <div id="right-panel-content" class="flex-1 scrollable"></div>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV (MOBILE) -->
+  <nav id="bottom-nav">
+    <button class="nav-item active" onclick="switchTab('reader',this)" id="nav-reader">
+      <div class="nav-indicator"><span class="material-icons-round">menu_book</span></div>
+      <span class="nav-label">Read</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('genealogy',this)" id="nav-genealogy">
+      <div class="nav-indicator"><span class="material-icons-round">account_tree</span></div>
+      <span class="nav-label">Genealogy</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('maps',this)" id="nav-maps">
+      <div class="nav-indicator"><span class="material-icons-round">map</span></div>
+      <span class="nav-label">Maps</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('notes',this)" id="nav-notes">
+      <div class="nav-indicator"><span class="material-icons-round">note_alt</span></div>
+      <span class="nav-label">Notes</span>
+    </button>
+    <button class="nav-item" onclick="switchTab('ai',this)" id="nav-ai">
+      <div class="nav-indicator"><span class="material-icons-round">smart_toy</span></div>
+      <span class="nav-label">AI</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ============================================================
+// BIBLE DATA ENGINE
+// ============================================================
+
+const BIBLE_BOOKS = [
+  // OLD TESTAMENT
+  {id:'gen',name:'Genesis',abbr:'Gen',chapters:50,testament:'OT',category:'Law'},
+  {id:'exo',name:'Exodus',abbr:'Exo',chapters:40,testament:'OT',category:'Law'},
+  {id:'lev',name:'Leviticus',abbr:'Lev',chapters:27,testament:'OT',category:'Law'},
+  {id:'num',name:'Numbers',abbr:'Num',chapters:36,testament:'OT',category:'Law'},
+  {id:'deu',name:'Deuteronomy',abbr:'Deu',chapters:34,testament:'OT',category:'Law'},
+  {id:'jos',name:'Joshua',abbr:'Jos',chapters:24,testament:'OT',category:'History'},
+  {id:'jdg',name:'Judges',abbr:'Jdg',chapters:21,testament:'OT',category:'History'},
+  {id:'rut',name:'Ruth',abbr:'Rut',chapters:4,testament:'OT',category:'History'},
+  {id:'1sa',name:'1 Samuel',abbr:'1Sa',chapters:31,testament:'OT',category:'History'},
+  {id:'2sa',name:'2 Samuel',abbr:'2Sa',chapters:24,testament:'OT',category:'History'},
+  {id:'1ki',name:'1 Kings',abbr:'1Ki',chapters:22,testament:'OT',category:'History'},
+  {id:'2ki',name:'2 Kings',abbr:'2Ki',chapters:25,testament:'OT',category:'History'},
+  {id:'1ch',name:'1 Chronicles',abbr:'1Ch',chapters:29,testament:'OT',category:'History'},
+  {id:'2ch',name:'2 Chronicles',abbr:'2Ch',chapters:36,testament:'OT',category:'History'},
+  {id:'ezr',name:'Ezra',abbr:'Ezr',chapters:10,testament:'OT',category:'History'},
+  {id:'neh',name:'Nehemiah',abbr:'Neh',chapters:13,testament:'OT',category:'History'},
+  {id:'est',name:'Esther',abbr:'Est',chapters:10,testament:'OT',category:'History'},
+  {id:'job',name:'Job',abbr:'Job',chapters:42,testament:'OT',category:'Wisdom'},
+  {id:'psa',name:'Psalms',abbr:'Psa',chapters:150,testament:'OT',category:'Wisdom'},
+  {id:'pro',name:'Proverbs',abbr:'Pro',chapters:31,testament:'OT',category:'Wisdom'},
+  {id:'ecc',name:'Ecclesiastes',abbr:'Ecc',chapters:12,testament:'OT',category:'Wisdom'},
+  {id:'sng',name:'Song of Solomon',abbr:'Sng',chapters:8,testament:'OT',category:'Wisdom'},
+  {id:'isa',name:'Isaiah',abbr:'Isa',chapters:66,testament:'OT',category:'Major Prophets'},
+  {id:'jer',name:'Jeremiah',abbr:'Jer',chapters:52,testament:'OT',category:'Major Prophets'},
+  {id:'lam',name:'Lamentations',abbr:'Lam',chapters:5,testament:'OT',category:'Major Prophets'},
+  {id:'ezk',name:'Ezekiel',abbr:'Ezk',chapters:48,testament:'OT',category:'Major Prophets'},
+  {id:'dan',name:'Daniel',abbr:'Dan',chapters:12,testament:'OT',category:'Major Prophets'},
+  {id:'hos',name:'Hosea',abbr:'Hos',chapters:14,testament:'OT',category:'Minor Prophets'},
+  {id:'jol',name:'Joel',abbr:'Jol',chapters:3,testament:'OT',category:'Minor Prophets'},
+  {id:'amo',name:'Amos',abbr:'Amo',chapters:9,testament:'OT',category:'Minor Prophets'},
+  {id:'oba',name:'Obadiah',abbr:'Oba',chapters:1,testament:'OT',category:'Minor Prophets'},
+  {id:'jon',name:'Jonah',abbr:'Jon',chapters:4,testament:'OT',category:'Minor Prophets'},
+  {id:'mic',name:'Micah',abbr:'Mic',chapters:7,testament:'OT',category:'Minor Prophets'},
+  {id:'nam',name:'Nahum',abbr:'Nam',chapters:3,testament:'OT',category:'Minor Prophets'},
+  {id:'hab',name:'Habakkuk',abbr:'Hab',chapters:3,testament:'OT',category:'Minor Prophets'},
+  {id:'zep',name:'Zephaniah',abbr:'Zep',chapters:3,testament:'OT',category:'Minor Prophets'},
+  {id:'hag',name:'Haggai',abbr:'Hag',chapters:2,testament:'OT',category:'Minor Prophets'},
+  {id:'zec',name:'Zechariah',abbr:'Zec',chapters:14,testament:'OT',category:'Minor Prophets'},
+  {id:'mal',name:'Malachi',abbr:'Mal',chapters:4,testament:'OT',category:'Minor Prophets'},
+  // NEW TESTAMENT
+  {id:'mat',name:'Matthew',abbr:'Mat',chapters:28,testament:'NT',category:'Gospels'},
+  {id:'mrk',name:'Mark',abbr:'Mrk',chapters:16,testament:'NT',category:'Gospels'},
+  {id:'luk',name:'Luke',abbr:'Luk',chapters:24,testament:'NT',category:'Gospels'},
+  {id:'jhn',name:'John',abbr:'Jhn',chapters:21,testament:'NT',category:'Gospels'},
+  {id:'act',name:'Acts',abbr:'Act',chapters:28,testament:'NT',category:'History'},
+  {id:'rom',name:'Romans',abbr:'Rom',chapters:16,testament:'NT',category:'Epistles'},
+  {id:'1co',name:'1 Corinthians',abbr:'1Co',chapters:16,testament:'NT',category:'Epistles'},
+  {id:'2co',name:'2 Corinthians',abbr:'2Co',chapters:13,testament:'NT',category:'Epistles'},
+  {id:'gal',name:'Galatians',abbr:'Gal',chapters:6,testament:'NT',category:'Epistles'},
+  {id:'eph',name:'Ephesians',abbr:'Eph',chapters:6,testament:'NT',category:'Epistles'},
+  {id:'php',name:'Philippians',abbr:'Php',chapters:4,testament:'NT',category:'Epistles'},
+  {id:'col',name:'Colossians',abbr:'Col',chapters:4,testament:'NT',category:'Epistles'},
+  {id:'1th',name:'1 Thessalonians',abbr:'1Th',chapters:5,testament:'NT',category:'Epistles'},
+  {id:'2th',name:'2 Thessalonians',abbr:'2Th',chapters:3,testament:'NT',category:'Epistles'},
+  {id:'1ti',name:'1 Timothy',abbr:'1Ti',chapters:6,testament:'NT',category:'Epistles'},
+  {id:'2ti',name:'2 Timothy',abbr:'2Ti',chapters:4,testament:'NT',category:'Epistles'},
+  {id:'tit',name:'Titus',abbr:'Tit',chapters:3,testament:'NT',category:'Epistles'},
+  {id:'phm',name:'Philemon',abbr:'Phm',chapters:1,testament:'NT',category:'Epistles'},
+  {id:'heb',name:'Hebrews',abbr:'Heb',chapters:13,testament:'NT',category:'Epistles'},
+  {id:'jas',name:'James',abbr:'Jas',chapters:5,testament:'NT',category:'Epistles'},
+  {id:'1pe',name:'1 Peter',abbr:'1Pe',chapters:5,testament:'NT',category:'Epistles'},
+  {id:'2pe',name:'2 Peter',abbr:'2Pe',chapters:3,testament:'NT',category:'Epistles'},
+  {id:'1jn',name:'1 John',abbr:'1Jn',chapters:5,testament:'NT',category:'Epistles'},
+  {id:'2jn',name:'2 John',abbr:'2Jn',chapters:1,testament:'NT',category:'Epistles'},
+  {id:'3jn',name:'3 John',abbr:'3Jn',chapters:1,testament:'NT',category:'Epistles'},
+  {id:'jud',name:'Jude',abbr:'Jud',chapters:1,testament:'NT',category:'Epistles'},
+  {id:'rev',name:'Revelation',abbr:'Rev',chapters:22,testament:'NT',category:'Prophecy'},
+];
+
+// SEED BIBLE TEXT (Representative verses + dynamic loading from KJV-style public domain)
+// The app uses IndexedDB to cache full Bible text fetched from a public CDN
+const BIBLE_SEED = {
+  gen: {
+    1: {
+      1:"In the beginning, God created the heavens and the earth.",
+      2:"The earth was without form and void, and darkness was over the face of the deep. And the Spirit of God was hovering over the face of the waters.",
+      3:"And God said, \"Let there be light,\" and there was light.",
+      4:"And God saw that the light was good. And God separated the light from the darkness.",
+      5:"God called the light Day, and the darkness he called Night. And there was evening and there was morning, the first day.",
+      6:"And God said, \"Let there be an expanse in the midst of the waters, and let it separate the waters from the waters.\"",
+      7:"And God made the expanse and separated the waters that were under the expanse from the waters that were above the expanse. And it was so.",
+      8:"And God called the expanse Heaven. And there was evening and there was morning, the second day.",
+      9:"And God said, \"Let the waters under the heavens be gathered together into one place, and let the dry land appear.\" And it was so.",
+      10:"God called the dry land Earth, and the waters that were gathered together he called Seas. And God saw that it was good.",
+      11:"And God said, \"Let the earth sprout vegetation, plants yielding seed, and fruit trees bearing fruit in which is their seed, each according to its kind, on the earth.\" And it was so.",
+      12:"The earth brought forth vegetation, plants yielding seed according to their own kinds, and trees bearing fruit in which is their seed, each according to its kind. And God saw that it was good.",
+      13:"And there was evening and there was morning, the third day.",
+      14:"And God said, \"Let there be lights in the expanse of the heavens to separate the day from the night. And let them be for signs and for seasons, and for days and years,\"",
+      15:"and let them be lights in the expanse of the heavens to give light upon the earth.\" And it was so.",
+      16:"And God made the two great lights—the greater light to rule the day and the lesser light to rule the night—and the stars.",
+      17:"And God set them in the expanse of the heavens to give light on the earth,",
+      18:"to rule over the day and over the night, and to separate the light from the darkness. And God saw that it was good.",
+      19:"And there was evening and there was morning, the fourth day.",
+      20:"And God said, \"Let the waters swarm with swarms of living creatures, and let birds fly above the earth across the expanse of the heavens.\"",
+      21:"So God created the great sea creatures and every living creature that moves, with which the waters swarm, according to their kinds, and every winged bird according to its kind. And God saw that it was good.",
+      22:"And God blessed them, saying, \"Be fruitful and multiply and fill the waters in the seas, and let birds multiply on the earth.\"",
+      23:"And there was evening and there was morning, the fifth day.",
+      24:"And God said, \"Let the earth bring forth living creatures according to their kinds—livestock and creeping things and beasts of the earth according to their kinds.\" And it was so.",
+      25:"And God made the beasts of the earth according to their kinds and the livestock according to their kinds, and everything that creeps on the ground according to its kind. And God saw that it was good.",
+      26:"Then God said, \"Let us make man in our image, after our likeness. And let them have dominion over the fish of the sea and over the birds of the heavens and over the livestock and over all the earth and over every creeping thing that creeps on the earth.\"",
+      27:"So God created man in his own image, in the image of God he created him; male and female he created them.",
+      28:"And God blessed them. And God said to them, \"Be fruitful and multiply and fill the earth and subdue it, and have dominion over the fish of the sea and over the birds of the heavens and over every living thing that moves on the earth.\"",
+      29:"And God said, \"Behold, I have given you every plant yielding seed that is on the face of all the earth, and every tree with seed in its fruit. You shall have them for food.\"",
+      30:"And to every beast of the earth and to every bird of the heavens and to everything that creeps on the earth, everything that has the breath of life, I have given every green plant for food.\" And it was so.",
+      31:"And God saw everything that he had made, and behold, it was very good. And there was evening and there was morning, the sixth day."
+    },
+    2:{
+      1:"Thus the heavens and the earth were finished, and all the host of them.",
+      2:"And on the seventh day God finished his work that he had done, and he rested on the seventh day from all his work that he had done.",
+      3:"So God blessed the seventh day and made it holy, because on it God rested from all his work that he had done in creation.",
+      4:"These are the generations of the heavens and the earth when they were created, in the day that the LORD God made the earth and the heavens.",
+      5:"When no bush of the field was yet in the land and no small plant of the field had yet sprung up—for the LORD God had not yet caused it to rain on the land, and there was no man to work the ground,",
+      6:"and a mist was going up from the land and was watering the whole face of the ground—",
+      7:"then the LORD God formed the man of dust from the ground and breathed into his nostrils the breath of life, and the man became a living creature.",
+      8:"And the LORD God planted a garden in Eden, in the east, and there he put the man whom he had formed.",
+      9:"And out of the ground the LORD God made to spring up every tree that is pleasant to the sight and good for food. The tree of life was in the midst of the garden, and the tree of the knowledge of good and evil.",
+      10:"A river flowed out of Eden to water the garden, and there it divided and became four rivers.",
+      15:"The LORD God took the man and put him in the garden of Eden to work it and keep it.",
+      16:"And the LORD God commanded the man, saying, \"You may surely eat of every tree of the garden,\"",
+      17:"but of the tree of the knowledge of good and evil you shall not eat, for in the day that you eat of it you shall surely die.\"",
+      18:"Then the LORD God said, \"It is not good that the man should be alone; I will make him a helper fit for him.\"",
+      24:"Therefore a man shall leave his father and his mother and hold fast to his wife, and they shall become one flesh."
+    },
+    3:{
+      1:"Now the serpent was more crafty than any other beast of the field that the LORD God had made. He said to the woman, \"Did God actually say, 'You shall not eat of any tree in the garden'?\"",
+      6:"So when the woman saw that the tree was good for food, and that it was a delight to the eyes, and that the tree was to be desired to make one wise, she took of its fruit and ate, and she also gave some to her husband who was with her, and he ate.",
+      15:"I will put enmity between you and the woman, and between your offspring and her offspring; he shall bruise your head, and you shall bruise his heel."
+    }
+  },
+  jhn: {
+    1:{
+      1:"In the beginning was the Word, and the Word was with God, and the Word was God.",
+      2:"He was in the beginning with God.",
+      3:"All things were made through him, and without him was not any thing made that was made.",
+      4:"In him was life, and the life was the light of men.",
+      5:"The light shines in the darkness, and the darkness has not overcome it.",
+      14:"And the Word became flesh and dwelt among us, and we have seen his glory, glory as of the only Son from the Father, full of grace and truth."
+    },
+    3:{
+      16:"For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life.",
+      17:"For God did not send his Son into the world to condemn the world, but in order that the world might be saved through him.",
+      36:"Whoever believes in the Son has eternal life; whoever does not obey the Son shall not see life, but the wrath of God remains on him."
+    },
+    14:{
+      1:"Let not your hearts be troubled. Believe in God; believe also in me.",
+      6:"Jesus said to him, \"I am the way, and the truth, and the life. No one comes to the Father except through me.\"",
+      27:"Peace I leave with you; my peace I give to you. Not as the world gives do I give to you. Let not your hearts be troubled, neither let them be afraid."
+    }
+  },
+  psa:{
+    23:{
+      1:"The LORD is my shepherd; I shall not want.",
+      2:"He makes me lie down in green pastures. He leads me beside still waters.",
+      3:"He restores my soul. He leads me in paths of righteousness for his name's sake.",
+      4:"Even though I walk through the valley of the shadow of death, I will fear no evil, for you are with me; your rod and your staff, they comfort me.",
+      5:"You prepare a table before me in the presence of my enemies; you anoint my head with oil; my cup overflows.",
+      6:"Surely goodness and mercy shall follow me all the days of my life, and I shall dwell in the house of the LORD forever."
+    },
+    119:{
+      105:"Your word is a lamp to my feet and a light to my path.",
+      130:"The unfolding of your words gives light; it imparts understanding to the simple."
+    }
+  },
+  pro:{
+    3:{
+      5:"Trust in the LORD with all your heart, and do not lean on your own understanding.",
+      6:"In all your ways acknowledge him, and he will make straight your paths."
+    }
+  },
+  isa:{
+    40:{
+      31:"but they who wait for the LORD shall renew their strength; they shall mount up with wings like eagles; they shall run and not be weary; they shall walk and not faint.",
+      28:"Have you not known? Have you not heard? The LORD is the everlasting God, the Creator of the ends of the earth. He does not faint or grow weary; his understanding is unsearchable."
+    },
+    53:{
+      5:"But he was pierced for our transgressions; he was crushed for our iniquities; upon him was the chastisement that brought us peace, and with his wounds we are healed.",
+      6:"All we like sheep have gone astray; we have turned—every one—to his own way; and the LORD has laid on him the iniquity of us all."
+    }
+  },
+  rom:{
+    3:{
+      23:"for all have sinned and fall short of the glory of God,"
+    },
+    5:{
+      8:"but God shows his love for us in that while we were still sinners, Christ died for us."
+    },
+    8:{
+      28:"And we know that for those who love God all things work together for good, for those who are called according to his purpose.",
+      38:"For I am sure that neither death nor life, nor angels nor rulers, nor things present nor things to come, nor powers,",
+      39:"nor height nor depth, nor anything else in all creation, will be able to separate us from the love of God in Christ Jesus our Lord."
+    },
+    10:{
+      9:"because, if you confess with your mouth that Jesus is Lord and believe in your heart that God raised him from the dead, you will be saved.",
+      10:"For with the heart one believes and is justified, and with the mouth one confesses and is saved."
+    }
+  },
+  mat:{
+    5:{
+      3:"Blessed are the poor in spirit, for theirs is the kingdom of heaven.",
+      4:"Blessed are those who mourn, for they shall be comforted.",
+      5:"Blessed are the meek, for they shall inherit the earth.",
+      6:"Blessed are those who hunger and thirst for righteousness, for they shall be satisfied.",
+      7:"Blessed are the merciful, for they shall receive mercy.",
+      8:"Blessed are the pure in heart, for they shall see God.",
+      9:"Blessed are the peacemakers, for they shall be called sons of God.",
+      10:"Blessed are those who are persecuted for righteousness' sake, for theirs is the kingdom of heaven."
+    },
+    6:{
+      9:"Pray then like this: \"Our Father in heaven, hallowed be your name.\"",
+      10:"Your kingdom come, your will be done, on earth as it is in heaven.",
+      11:"Give us this day our daily bread,",
+      12:"and forgive us our debts, as we also have forgiven our debtors.",
+      13:"And lead us not into temptation, but deliver us from evil.\"",
+      33:"But seek first the kingdom of God and his righteousness, and all these things will be added to you."
+    },
+    28:{
+      18:"And Jesus came and said to them, \"All authority in heaven and on earth has been given to me.\"",
+      19:"Go therefore and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit,",
+      20:"teaching them to observe all that I have commanded you. And behold, I am with you always, to the end of the age.\""
+    }
+  },
+  php:{
+    4:{
+      4:"Rejoice in the Lord always; again I will say, rejoice.",
+      6:"do not be anxious about anything, but in everything by prayer and supplication with thanksgiving let your requests be made known to God.",
+      7:"And the peace of God, which surpasses all understanding, will guard your hearts and your minds in Christ Jesus.",
+      13:"I can do all things through him who strengthens me."
+    }
+  },
+  rev:{
+    1:{
+      8:"\"I am the Alpha and the Omega,\" says the Lord God, \"who is and who was and who is to come, the Almighty.\""
+    },
+    21:{
+      1:"Then I saw a new heaven and a new earth, for the first heaven and the first earth had passed away, and the sea was no more.",
+      4:"He will wipe away every tear from their eyes, and death shall be no more, neither shall there be mourning, nor crying, nor pain anymore, for the former things have passed away."
+    },
+    22:{
+      20:"He who testifies to these things says, \"Surely I am coming soon.\" Amen. Come, Lord Jesus!",
+      21:"The grace of the Lord Jesus be with all. Amen."
+    }
+  }
+};
+
+// Book context information
+const BOOK_CONTEXT = {
+  gen:{author:"Moses (traditionally)",date:"~1400–1446 BC",setting:"Creation through Patriarchal period (~4000–1800 BC)",audience:"Israel in the wilderness",themes:["Creation","Fall","Redemption promise","Covenant","Election"],keyVerses:["1:1","3:15","12:1-3","50:20"],summary:"Genesis is the book of beginnings — the universe, humanity, sin, redemption, nations, and the covenant people. It traces God's redemptive plan from creation through the patriarchs Abraham, Isaac, Jacob, and Joseph.",theologicalIntent:"Establishes God as sovereign Creator and covenant-maker, introduces human sin and the proto-evangelium (first gospel promise) in 3:15."},
+  exo:{author:"Moses",date:"~1446–1406 BC",setting:"Egypt and Sinai wilderness (~1446–1406 BC)",audience:"Israelites recently freed from Egyptian slavery",themes:["Redemption","Covenant at Sinai","God's presence","Law","Worship"],keyVerses:["3:14","14:13-14","20:1-17"],summary:"Exodus records Israel's miraculous deliverance from Egyptian slavery, the giving of the Law at Sinai, and the construction of the Tabernacle as God's dwelling place among his people.",theologicalIntent:"Reveals God as Redeemer-King who establishes a covenant community to display his glory to all nations."},
+  psa:{author:"David (73 psalms), Asaph, Sons of Korah, Moses, Solomon, others",date:"~1400–400 BC",setting:"Various historical settings across Israel's history",audience:"Corporate Israel; used in temple worship",themes:["Praise","Lament","Trust","Messianic hope","God's faithfulness"],keyVerses:["23:1","119:105","22:1","110:1"],summary:"The Psalms are the inspired hymnbook of ancient Israel — 150 songs and prayers expressing the full range of human emotion directed to God, from deepest lament to highest praise.",theologicalIntent:"Teaches believers to bring every emotional experience to God in prayer and worship, while anticipating the Messiah throughout."},
+  isa:{author:"Isaiah son of Amoz",date:"~740–681 BC",setting:"Jerusalem, under Kings Uzziah through Hezekiah",audience:"Judah, threatened by Assyria and later Babylon",themes:["Holy God","Sin and judgment","Messianic hope","Servant Songs","Restoration"],keyVerses:["6:1-8","40:31","53:5-6","61:1-3"],summary:"Isaiah is the 'fifth gospel' of the Old Testament, prophesying both judgment and remarkable restoration. Its 66 chapters mirror the 66 books of the Bible, moving from law and condemnation to gospel and restoration.",theologicalIntent:"Reveals the coming Suffering Servant-Messiah (chapters 52–53) who would bear sin's penalty to bring ultimate shalom."},
+  jhn:{author:"John (son of Zebedee, the Apostle)",date:"~85–95 AD",setting:"Palestine; written from Ephesus",audience:"Broader Greco-Roman world; both Jews and Gentiles",themes:["Incarnation","Belief","Eternal life","Signs","I AM sayings"],keyVerses:["1:1-14","3:16","14:6","20:30-31"],summary:"John's Gospel is a theological masterpiece presenting Jesus as the eternal Word become flesh. Seven miraculous signs and seven 'I AM' declarations reveal Jesus's divine identity. Written that readers may believe and have life in his name.",theologicalIntent:"Demonstrate that Jesus is the divine Son of God, and that believing in him is the only pathway to eternal life."},
+  mat:{author:"Matthew (Levi), the tax collector and apostle",date:"~50–70 AD",setting:"Written for Jewish Christians, possibly in Antioch",audience:"Jewish Christians; those familiar with Hebrew Scriptures",themes:["Kingdom of Heaven","Fulfillment of OT","Discipleship","Messiah","Church"],keyVerses:["5:3-12","16:18","28:18-20"],summary:"Matthew presents Jesus as the promised Jewish Messiah and King of God's kingdom. Organized around five major discourses mirroring the Pentateuch, it shows Jesus as the new Moses giving a new law of the kingdom.",theologicalIntent:"Prove from Hebrew Scripture that Jesus is the Messianic King of whom the prophets spoke, inaugurating a new covenant community."},
+  rom:{author:"Paul (Saul of Tarsus)",date:"~57 AD",setting:"Written from Corinth to the church at Rome",audience:"Roman believers, both Jewish and Gentile",themes:["Justification by faith","Sin","Grace","Election","Sanctification","Ethics"],keyVerses:["1:16-17","3:23","5:8","8:1","8:28-39","10:9-10"],summary:"Romans is Paul's magnum opus — the most systematic exposition of the Christian gospel. It argues that all humans stand condemned, but God justifies the ungodly through faith in Jesus Christ alone.",theologicalIntent:"Establish the theological foundation of the gospel: humanity's universal guilt, God's grace through Christ's atoning work, and the life of faith."},
+  rev:{author:"John the Apostle",date:"~95 AD",setting:"Written from Patmos during Domitian's persecution",audience:"Seven churches of Asia Minor; all persecuted believers",themes:["God's sovereignty","Victory of Christ","Judgment","New Creation","Worship"],keyVerses:["1:8","3:20","12:11","21:4","22:20"],summary:"Revelation is a visionary-apocalyptic letter to persecuted believers assuring them that despite present suffering, God and the Lamb are victorious. History moves purposefully toward the new creation.",theologicalIntent:"Encourage persecuted believers that Jesus is Lord over all earthly powers, and that his ultimate victory is certain."}
+};
+
+// Commentary data
+const COMMENTARIES = {
+  'gen_1_1':{text:"The opening statement of Scripture is the most profound declaration ever made: 'In the beginning, God.' Before time, space, or matter existed, God was. The Hebrew 'Bereshit' (בְּרֵאשִׁית) indicates the absolute beginning of created reality. 'Created' (bara, בָּרָא) is used exclusively of divine action — only God creates ex nihilo (out of nothing). This verse demolishes materialism (matter is not eternal), pantheism (God is separate from creation), and polytheism (there is one Creator)."},
+  'gen_1_3':{text:"'Let there be light' — God creates by his powerful word alone, a pattern repeated eight times in Chapter 1. This anticipates John 1:1-3, where the pre-incarnate Word (Logos) is the agent of all creation. Light (Hebrew: 'or) is not solar light (the sun appears on Day 4) but the foundational luminous energy that makes visible perception possible."},
+  'gen_1_26':{text:"The plural 'Let us make' has been debated throughout church history. It reflects either the divine council (angels), a 'royal we,' or — most significantly — the earliest hint of the Trinity in Scripture. 'Image of God' (imago Dei) grants human beings unique dignity: rationality, moral capacity, relational nature, and dominion stewardship. No other creature bears this distinction."},
+  'jhn_3_16':{text:"Often called 'the gospel in miniature,' John 3:16 encapsulates the entire Christian message in one sentence. 'God so loved' — the scope of divine love is cosmic and universal, not limited to Israel. 'The world' (Greek: kosmos) — the fallen, rebellious human race, not merely the elect. 'Only Son' (Greek: monogenes) — uniquely begotten, of the same divine essence. 'Perish' — eternal separation from God. 'Eternal life' — begins now through union with Christ and extends beyond death. This verse flows from the Nicodemus conversation, where Jesus describes new birth (3:3-8) as the prerequisite to receiving this gift."},
+  'jhn_14_6':{text:"Jesus's most exclusive claim: 'I am the way, and the truth, and the life.' The definite articles ('the') make this absolute rather than relative. This is the sixth of the seven 'I AM' declarations in John's Gospel, echoing God's self-revelation in Exodus 3:14. The context is the Upper Room Discourse — Jesus comforting disciples before his crucifixion. This claim excludes religious pluralism while offering universal access: the 'way' is a person, not a system."},
+  'psa_23_1':{text:"Perhaps the most beloved passage in all Scripture. David, himself a shepherd boy who became Israel's greatest king, employs the metaphor masterfully. 'The LORD' — the covenant name YHWH (Yahweh), the ever-present, self-existent God. 'My shepherd' — intensely personal. 'I shall not want' — comprehensive sufficiency: nothing necessary for life and godliness will be lacking. The psalm traces a journey from green pastures and still waters (provision), through the valley of the shadow of death (suffering), to the table set against enemies (victory), ending in God's house (eternal dwelling)."},
+  'rom_8_28':{text:"One of the most comforting promises in Scripture, but often misunderstood. 'All things' does not mean all things are good, but that God is sovereignly working through all things — including suffering, loss, and pain — toward a good ultimate purpose. 'For those who love God' — the promise is covenant-conditioned, for believers. 'Called according to his purpose' — this connects to God's electing, predestining love (vv. 29-30). The 'good' is conformity to Christ's image (v. 29), not merely temporal happiness."},
+  'mat_5_3':{text:"The Beatitudes open the Sermon on the Mount — Jesus's inaugural address of the Kingdom of Heaven. 'Blessed' (Greek: makarios, Hebrew: ashrei) means 'deeply happy, spiritually flourishing.' 'Poor in spirit' does not mean materially poor, but those who recognize their spiritual bankruptcy before God — the beginning of true discipleship. This is the exact opposite of the world's value system, which exalts the self-sufficient."},
+  'php_4_13':{text:"One of the most frequently quoted — and most frequently misquoted — verses in the NT. In context, Paul is speaking of contentment in all circumstances, not general athletic or worldly achievement. 'I can do all things' means 'I can endure all circumstances (prosperity or poverty).' 'Through him who strengthens me' — the source is Christ, not human willpower. The text is about theological contentment rooted in union with Christ, not a blank check for personal ambition."},
+  'isa_53_5':{text:"The crown jewel of the 'Servant Songs' (Isaiah 42, 49, 50, 52-53), this verse is perhaps the clearest Old Testament prophecy of substitutionary atonement. Written 700 years before the crucifixion: 'pierced for our transgressions' — his wounds were caused by our sins. 'Crushed for our iniquities' — the punishment was transferred. 'Chastisement that brought us peace' — his punishment purchases our shalom. 'By his wounds we are healed' — spiritual healing/reconciliation. The NT applies this directly to Jesus (1 Peter 2:24; Luke 22:37)."}
+};
+
+// Cross-references
+const CROSS_REFS = {
+  'gen_1_1':['Jhn 1:1-3','Heb 11:3','Col 1:16','Rev 4:11','Psa 33:6'],
+  'jhn_3_16':['Rom 5:8','1Jn 4:9-10','Jhn 1:14','Eph 2:4-5','Tit 3:4-7'],
+  'psa_23_1':['Jhn 10:11','Heb 13:20','1Pe 5:4','Ezk 34:11-12','Rev 7:17'],
+  'isa_53_5':['1Pe 2:24','2Co 5:21','Mat 8:17','Heb 9:28','Rom 4:25'],
+  'rom_8_28':['Gen 50:20','Php 4:6-7','Eph 1:11','Jer 29:11','Psa 84:11'],
+  'mat_5_3':['Luk 6:20','Isa 57:15','Jas 2:5','Psa 51:17','2Co 12:10'],
+  'php_4_13':['2Co 12:9-10','Php 4:11','1Ti 6:6-8','Heb 13:5','2Co 9:8'],
+  'jhn_14_6':['Jhn 10:9','Acts 4:12','1Ti 2:5','Heb 10:20','Eph 2:18']
+};
+
+// ============================================================
+// CHARACTER & GENEALOGY DATA
+// ============================================================
+const BIBLE_CHARACTERS = [
+  {id:'adam',name:'Adam',emoji:'👨',born:'Creation',died:'930 yrs',age:930,era:'Ante-Diluvian',role:'First man, image-bearer',ref:'Gen 1:26-5:5',spouse:'Eve',children:['Cain','Abel','Seth'],desc:"Created from dust in God's image, given dominion over creation. Fell through disobedience, bringing sin and death into the world.",gender:'M'},
+  {id:'eve',name:'Eve',emoji:'👩',born:'Creation',died:'Unknown',age:null,era:'Ante-Diluvian',role:'First woman, mother of all living',ref:'Gen 2:21-4:2',spouse:'Adam',children:['Cain','Abel','Seth'],desc:"Formed from Adam's rib as his equal partner. Deceived by the serpent, she became the first to eat the forbidden fruit.",gender:'F'},
+  {id:'cain',name:'Cain',emoji:'😔',born:'Post-Fall',died:'Unknown',age:null,era:'Ante-Diluvian',role:'First murderer, city-builder',ref:'Gen 4:1-24',parent:'Adam & Eve',desc:"First son of Adam and Eve. Killed his brother Abel out of jealousy over offerings, was cursed and marked by God.",gender:'M'},
+  {id:'abel',name:'Abel',emoji:'🐑',born:'Post-Fall',died:'Young',age:null,era:'Ante-Diluvian',role:'First martyr, shepherd',ref:'Gen 4:2-8',parent:'Adam & Eve',desc:"Second son of Adam and Eve, a shepherd whose offering was accepted by God. Killed by his brother Cain — the first death in human history.",gender:'M'},
+  {id:'seth',name:'Seth',emoji:'👦',born:'~130 AM',died:'1042 AM',age:912,era:'Ante-Diluvian',role:'Ancestor of Noah and Christ',ref:'Gen 4:25-5:8',parent:'Adam & Eve',desc:"Third named son of Adam, appointed by God to replace Abel. Through his line came Noah, and ultimately Jesus Christ.",gender:'M'},
+  {id:'enoch',name:'Enoch',emoji:'✨',born:'~622 AM',died:'Never died',age:365,era:'Ante-Diluvian',role:'Man who walked with God',ref:'Gen 5:21-24; Heb 11:5',parent:'Jared',desc:"One of two men in Scripture who never died — God 'took him.' He walked with God for 300 years and was translated directly to heaven. Father of Methuselah.",gender:'M'},
+  {id:'methuselah',name:'Methuselah',emoji:'🧓',born:'~687 AM',died:'1656 AM',age:969,era:'Ante-Diluvian',role:'Oldest person in the Bible',ref:'Gen 5:25-27',parent:'Enoch',desc:"Son of Enoch, grandfather of Noah. At 969 years, the oldest person recorded in the Bible. He died in the year of the flood.",gender:'M'},
+  {id:'noah',name:'Noah',emoji:'⛵',born:'~1056 AM',died:'2006 AM',age:950,era:'Ante-Diluvian / Post-Flood',role:'Builder of the Ark, preacher of righteousness',ref:'Gen 6-9; Heb 11:7',parent:'Lamech',spouse:'(unnamed)',children:['Shem','Ham','Japheth'],desc:"Found grace in God's eyes in a corrupt world. Built the ark as God commanded, survived the flood with his family and the animals. First person to plant a vineyard.",gender:'M'},
+  {id:'shem',name:'Shem',emoji:'🏕️',born:'~1558 AM',died:'2158 AM',age:600,era:'Post-Flood / Patriarchal',role:'Ancestor of Semitic peoples and Abraham',ref:'Gen 10:21-31; 11:10-26',parent:'Noah',desc:"Eldest son of Noah, blessed by his father. His line produced the Semitic peoples, including Abraham and ultimately Jesus Christ.",gender:'M'},
+  {id:'abraham',name:'Abraham',emoji:'⭐',born:'~2166 BC',died:'~1991 BC',age:175,era:'Patriarchal',role:'Father of faith, patriarch of Israel',ref:'Gen 12-25; Heb 11:8-19',spouse:'Sarah (and Hagar)',children:['Ishmael','Isaac'],desc:"Called by God from Ur of the Chaldees to Canaan. Received the Abrahamic Covenant — father of many nations. His faith was counted as righteousness (Gen 15:6). Passed the ultimate test: willingness to offer Isaac.",gender:'M'},
+  {id:'sarah',name:'Sarah',emoji:'👸',born:'~2156 BC',died:'~2029 BC',age:127,era:'Patriarchal',role:"Abraham's wife, mother of Israel",ref:'Gen 12-23; Heb 11:11',spouse:'Abraham',children:['Isaac'],desc:"Barren until age 90, when God miraculously opened her womb to bear Isaac, the child of promise. Only woman in the Bible whose age at death is recorded.",gender:'F'},
+  {id:'isaac',name:'Isaac',emoji:'🌟',born:'~2066 BC',died:'~1886 BC',age:180,era:'Patriarchal',role:'Child of promise, type of Christ',ref:'Gen 21-35; Heb 11:17-20',parent:'Abraham & Sarah',spouse:'Rebekah',children:['Esau','Jacob'],desc:"Miracle child of Abraham and Sarah, a type of Christ in the near-sacrifice at Moriah. Passed on the Abrahamic blessing to Jacob.",gender:'M'},
+  {id:'jacob',name:'Jacob/Israel',emoji:'🏴',born:'~2006 BC',died:'~1859 BC',age:147,era:'Patriarchal',role:"Father of the 12 tribes of Israel",ref:'Gen 25-50',parent:'Isaac & Rebekah',spouse:'Leah, Rachel (+ Bilhah, Zilpah)',children:['12 sons + Dinah'],desc:"Grasped at the birthright and blessing, fled to Haran, wrestled with God, was renamed Israel. His 12 sons became the 12 tribes of the nation of Israel.",gender:'M'},
+  {id:'joseph',name:'Joseph',emoji:'🌈',born:'~1915 BC',died:'~1805 BC',age:110,era:'Patriarchal / Egypt',role:'Savior of Israel, type of Christ',ref:'Gen 37-50; Acts 7:9-14',parent:'Jacob & Rachel',desc:"Favorite son of Jacob, sold into slavery by jealous brothers. Rose to become second-in-command of Egypt. Preserved Israel during seven-year famine. Classic type of Christ: rejected by brothers, exalted to glory, saving many lives.",gender:'M'},
+  {id:'moses',name:'Moses',emoji:'⚡',born:'~1526 BC',died:'~1406 BC',age:120,era:'Exodus',role:'Lawgiver, liberator, prophet',ref:'Exo 2-Deu 34; Heb 11:23-28',spouse:'Zipporah',children:['Gershom','Eliezer'],desc:"Drawn from the Nile, raised in Pharaoh's palace, fled to Midian, called by God at the burning bush. Led Israel out of Egypt, received the Ten Commandments, established the covenant. Greatest prophet of the Old Testament (Deu 34:10). His death was on Mt. Nebo, within sight of the Promised Land.",gender:'M'},
+  {id:'joshua',name:'Joshua',emoji:'⚔️',born:'~1500 BC',died:'~1390 BC',age:110,era:'Conquest',role:'Military leader, successor to Moses',ref:'Num 13; Book of Joshua',desc:"Caleb's fellow spy who gave the good report. Moses's successor, led Israel across the Jordan into Canaan, conquered the land. His Hebrew name (Yeshua) is the same as Jesus.",gender:'M'},
+  {id:'david',name:'David',emoji:'👑',born:'~1040 BC',died:'~970 BC',age:70,era:'Monarchy',role:'King, psalmist, ancestor of Christ',ref:'1 Sam 16 – 1 Ki 2; Psa 1-72',spouse:'Michal, Abigail, Bathsheba, others',children:['Absalom','Solomon','others'],desc:"Youngest son of Jesse, anointed king as a boy, defeated Goliath, united Israel's tribes, established Jerusalem as capital. Author of many Psalms. A 'man after God's own heart' despite serious failures. The Davidic Covenant promises an eternal throne.",gender:'M'},
+  {id:'solomon',name:'Solomon',emoji:'💎',born:'~990 BC',died:'~931 BC',age:60,era:'Monarchy (Golden Age)',role:'Wisest king, Temple builder',ref:'1 Ki 1-11; Pro 1-29; Ecc; Sng',parent:'David & Bathsheba',desc:"Given wisdom beyond all others by God. Built the first Temple in Jerusalem. Author of Proverbs, Ecclesiastes, Song of Solomon. His unfaithfulness in old age (1,000 wives and concubines) led to the kingdom's division.",gender:'M'},
+  {id:'elijah',name:'Elijah',emoji:'🔥',born:'~900 BC',died:'Never died',age:null,era:'Divided Monarchy',role:'Prophet of fire, type of John the Baptist',ref:'1 Ki 17-2 Ki 2; Mal 4:5-6',desc:"Greatest prophet of the northern kingdom, confronted Ahab and Jezebel. Called down fire on Mt. Carmel, fled to Horeb. Like Enoch, was taken to heaven alive in a whirlwind. Appears at the Transfiguration.",gender:'M'},
+  {id:'jeremiah',name:'Jeremiah',emoji:'😢',born:'~650 BC',died:'~570 BC',age:~80,era:'Late Monarchy / Exile',role:'Weeping prophet, new covenant announcer',ref:'Jer 1-52; Lam',desc:"Called from birth, forbidden to marry. Preached unpopular warnings of Babylonian judgment for 40+ years, mostly ignored. Announced the New Covenant (Jer 31:31-34). Witnessed Jerusalem's destruction and the exile.",gender:'M'},
+  {id:'daniel',name:'Daniel',emoji:'🦁',born:'~620 BC',died:'~535 BC',age:~85,era:'Exile (Babylon)',role:'Statesman-prophet, interpreter of dreams',ref:'Dan 1-12; Ezk 14:14',desc:"Taken to Babylon as a teenager, remained faithful through the lion's den and political pressure. Received apocalyptic visions of coming kingdoms and the coming of the Son of Man (Dan 7).",gender:'M'},
+  {id:'mary',name:'Mary',emoji:'🌺',born:'~20 BC',died:'~54 AD',age:null,era:'Intertestamental / Apostolic',role:'Mother of Jesus, Theotokos',ref:'Luke 1-2; Jhn 2; Acts 1:14',spouse:'Joseph (betrothed)',children:['Jesus (divine), James, Joses, Judas, Simon, sisters'],desc:"Young virgin of Nazareth chosen to bear the Son of God. Her Magnificat (Luke 1:46-55) is one of Scripture's greatest hymns. Present at the crucifixion and in the Upper Room at Pentecost.",gender:'F'},
+  {id:'jesus',name:'Jesus Christ',emoji:'✝️',born:'~4 BC (Bethlehem)',died:'~30 AD (Jerusalem)',age:33,era:'Apostolic / Fulfillment',role:'Son of God, Savior, Lord',ref:'All 4 Gospels; entire NT',parent:'Virgin Mary; legally Joseph',desc:"The eternal Son of God incarnate, born of a virgin, lived a sinless life, crucified for human sin, bodily resurrected on the third day, ascended to the Father's right hand. The central figure of all Scripture — both Testaments point to him.",gender:'M'},
+  {id:'paul',name:'Paul (Saul of Tarsus)',emoji:'📜',born:'~5 AD',died:'~67 AD',age:~62,era:'Apostolic',role:'Apostle to the Gentiles, theologian',ref:'Acts 9; 13 Epistles',desc:"Pharisee who persecuted Christians until his dramatic conversion on the Damascus road. Became the greatest missionary of the early church, authored 13 New Testament letters, and was martyred in Rome under Nero.",gender:'M'}
+];
+
+const BIBLICAL_ERAS = [
+  {name:'Creation & Fall',years:'~4000 BC',desc:'Adam and Eve, the Fall, Cain and Abel, early civilization',color:'#7b1fa2'},
+  {name:'Ante-Diluvian (Pre-Flood)',years:'~4000–2350 BC',desc:'Patriarchs from Adam to Noah, extreme human longevity, increasing wickedness',color:'#1565c0'},
+  {name:'Post-Flood (Table of Nations)',years:'~2350–2100 BC',desc:'Noah\'s descendants spread across the earth; Tower of Babel',color:'#00695c'},
+  {name:'Patriarchal Age',years:'~2166–1805 BC',desc:'Abraham, Isaac, Jacob, Joseph; covenant establishment',color:'#e65100'},
+  {name:'Egyptian Bondage',years:'~1805–1446 BC',desc:'Israel in Egypt, oppression, birth of Moses',color:'#b71c1c'},
+  {name:'Exodus & Wilderness',years:'~1446–1406 BC',desc:'10 Plagues, Sinai covenant, 40 years in the wilderness',color:'#f57f17'},
+  {name:'Conquest of Canaan',years:'~1406–1375 BC',desc:'Joshua leads Israel to conquer the Promised Land',color:'#388e3c'},
+  {name:'Period of Judges',years:'~1375–1050 BC',desc:'Cyclical sin, oppression, deliverance pattern; 15 judges',color:'#5d4037'},
+  {name:'United Monarchy',years:'~1050–931 BC',desc:'Saul, David, Solomon; Israel\'s golden age',color:'#fbc02d'},
+  {name:'Divided Monarchy',years:'~931–586 BC',desc:'Northern (Israel) and Southern (Judah) kingdoms; major prophets',color:'#c62828'},
+  {name:'Babylonian Exile',years:'~605–538 BC',desc:'Daniel, Ezekiel minister during Babylonian captivity',color:'#4527a0'},
+  {name:'Return & Restoration',years:'~538–400 BC',desc:'Ezra, Nehemiah, Zerubbabel rebuild Jerusalem and the Temple',color:'#2e7d32'},
+  {name:'Intertestamental Period',years:'~400–5 BC',desc:'400 years of prophetic silence; Greek and Roman rule; rise of Pharisees',color:'#546e7a'},
+  {name:'Life of Christ',years:'~5 BC – 30 AD',desc:'Birth, ministry, death, and resurrection of Jesus',color:'#1a237e'},
+  {name:'Apostolic Age',years:'~30–100 AD',desc:'Pentecost, early church, Paul\'s missionary journeys, writing of the NT',color:'#b71c1c'},
+];
+
+const GENEALOGY_TREE = [
+  {era:'Ante-Diluvian Patriarchs (Adam to Noah)',people:[
+    {name:'Adam',age:930,note:'First man'},
+    {name:'Seth',age:912,note:'Son of Adam'},
+    {name:'Enosh',age:905,note:'Son of Seth'},
+    {name:'Kenan',age:910,note:'Son of Enosh'},
+    {name:'Mahalalel',age:895,note:'Son of Kenan'},
+    {name:'Jared',age:962,note:'Son of Mahalalel'},
+    {name:'Enoch',age:365,note:'Taken by God — never died'},
+    {name:'Methuselah',age:969,note:'Oldest man — died year of Flood'},
+    {name:'Lamech',age:777,note:'Son of Methuselah'},
+    {name:'Noah',age:950,note:'Built the Ark'},
+  ]},
+  {era:'Post-Flood to Abraham (Shem Line)',people:[
+    {name:'Shem',age:600,note:'Son of Noah'},
+    {name:'Arphaxad',age:438,note:'Son of Shem'},
+    {name:'Shelah',age:433,note:'Son of Arphaxad'},
+    {name:'Eber',age:464,note:'Son of Shelah'},
+    {name:'Peleg',age:239,note:'Earth divided in his time'},
+    {name:'Reu',age:239,note:'Son of Peleg'},
+    {name:'Serug',age:230,note:'Son of Reu'},
+    {name:'Nahor',age:148,note:'Son of Serug'},
+    {name:'Terah',age:205,note:'Father of Abraham'},
+  ]},
+  {era:'Patriarchs (Abraham to Joseph)',people:[
+    {name:'Abraham',age:175,note:'Father of faith; covenant'},
+    {name:'Isaac',age:180,note:'Child of promise'},
+    {name:'Jacob',age:147,note:'Renamed Israel; 12 sons'},
+    {name:'Judah',age:null,note:'Royal tribe; Messianic line'},
+    {name:'Perez',age:null,note:'Son of Judah'},
+    {name:'Hezron',age:null,note:'Son of Perez'},
+    {name:'Ram',age:null,note:'Son of Hezron'},
+    {name:'Amminadab',age:null,note:'Son of Ram'},
+    {name:'Nahshon',age:null,note:'Son of Amminadab'},
+    {name:'Salmon',age:null,note:'Married Rahab of Jericho'},
+    {name:'Boaz',age:null,note:'Married Ruth; kinsman-redeemer'},
+    {name:'Obed',age:null,note:'Son of Boaz and Ruth'},
+    {name:'Jesse',age:null,note:'Father of David'},
+    {name:'David',age:70,note:'King; Messianic covenant'},
+  ]},
+  {era:'Royal Line: David to Christ (Matthew 1)',people:[
+    {name:'Solomon',age:60,note:'David\'s son; Temple builder'},
+    {name:'Rehoboam',age:58,note:'Kingdom splits'},
+    {name:'Abijah',age:null,note:'Son of Rehoboam'},
+    {name:'Asa',age:null,note:'Son of Abijah; godly king'},
+    {name:'Jehoshaphat',age:null,note:'Godly king of Judah'},
+    {name:'Joram',age:null,note:'Son of Jehoshaphat'},
+    {name:'Uzziah',age:68,note:'Reign during Isaiah'},
+    {name:'Jotham',age:41,note:'Son of Uzziah'},
+    {name:'Ahaz',age:36,note:'Wicked king; Assyrian threat'},
+    {name:'Hezekiah',age:54,note:'Godly king; Isaiah\'s time'},
+    {name:'Manasseh',age:67,note:'Most wicked; later repented'},
+    {name:'Josiah',age:39,note:'Righteous reformer; found the Law'},
+    {name:'Jeconiah',age:null,note:'Last king before exile'},
+    {name:'Shealtiel',age:null,note:'Post-exile'},
+    {name:'Zerubbabel',age:null,note:'Led first return from exile'},
+    {name:'Abiud → Eliakim → Azor → Zadok → Akim → Eliud → Eleazar → Matthan → Jacob',age:null,note:'Compressed Matthew 1 genealogy'},
+    {name:'Joseph',age:null,note:'Legal father of Jesus (Mary\'s husband)'},
+    {name:'JESUS CHRIST',age:33,note:'Son of God; fulfillment of all covenants'},
+  ]}
+];
+
+// ============================================================
+// MAP DATA
+// ============================================================
+const BIBLE_MAPS = {
+  abraham:{
+    title:"Abraham's Journey (~2000 BC)",
+    description:"From Ur of the Chaldees through Haran to Canaan",
+    pins:[
+      {id:'ur',x:72,y:62,name:"Ur of the Chaldees",color:"#1a237e",desc:"Abraham's birthplace. Modern-day southern Iraq (Tell el-Muqayyar). A major Sumerian city-state with a famous ziggurat dedicated to the moon god Nanna. Abraham called out of this pagan context by God.",verses:["Gen 11:31","Gen 15:7"]},
+      {id:'haran',x:55,y:45,name:"Haran",color:"#1a237e",desc:"Terah died here at 205 years old. Abraham stayed until called to leave at age 75. Located in modern southern Turkey near the Syrian border.",verses:["Gen 11:32","Gen 12:1-4"]},
+      {id:'shechem',x:42,y:52,name:"Shechem",color:"#388e3c",desc:"First stop in Canaan. Here God appeared and promised, 'To your offspring I will give this land.' Abraham built his first altar in the Promised Land.",verses:["Gen 12:6-7"]},
+      {id:'bethel',x:43,y:55,name:"Bethel/Ai",color:"#388e3c",desc:"Abraham pitched his tent between Bethel and Ai, built a second altar, and called on the name of the LORD.",verses:["Gen 12:8"]},
+      {id:'egypt',x:30,y:65,name:"Egypt",color:"#f57f17",desc:"Abraham went to Egypt during a famine, where he compromised by claiming Sarah was his sister. Pharaoh was plagued and returned Sarah.",verses:["Gen 12:10-20"]},
+      {id:'hebron',x:43,y:58,name:"Hebron (Mamre)",color:"#e65100",desc:"Abraham's main residence in Canaan. Here he received God's covenant, the three visitors announced Isaac's birth, and Abraham interceded for Sodom. The cave of Machpelah (family tomb) is here.",verses:["Gen 13:18","Gen 18:1","Gen 23:19"]},
+      {id:'moriah',x:44,y:56,name:"Mt. Moriah",color:"#b71c1c",desc:"Site of the near-sacrifice of Isaac. Later becomes Jerusalem, where Solomon's Temple was built on this exact mountain. God provided the ram — 'The LORD will provide.'",verses:["Gen 22:1-14","2Ch 3:1"]},
+    ]
+  },
+  exodus:{
+    title:"The Exodus Route (~1446 BC)",
+    description:"Israel's journey from Egypt to Canaan through the wilderness",
+    pins:[
+      {id:'rameses',x:32,y:63,name:"Rameses (Goshen)",color:"#b71c1c",desc:"The starting point of the Exodus — the land of Goshen where Israel had lived for ~430 years. The 10 plagues struck Egypt to secure their release.",verses:["Exo 12:37","Gen 47:11"]},
+      {id:'redsea',x:38,y:67,name:"Sea of Reeds (Red Sea)",color:"#0d47a1",desc:"God parted the waters, Israel crossed on dry ground, and Pharaoh's army was destroyed. The greatest act of redemption in the OT — a type of baptism (1 Cor 10:1-2).",verses:["Exo 14:21-31","1Co 10:1-2"]},
+      {id:'marah',x:39,y:68,name:"Marah",color:"#f57f17",desc:"Bitter water made sweet — God's first test of Israel's faith in the wilderness. God revealed himself as 'the LORD who heals you.'",verses:["Exo 15:22-26"]},
+      {id:'sinai',x:43,y:73,name:"Mt. Sinai (Horeb)",color:"#7b1fa2",desc:"God descended in fire on the mountain. Moses received the Ten Commandments and the entire Mosaic Law. Israel entered into covenant with God. Also where Elijah fled and heard God's still small voice.",verses:["Exo 19-20","1Ki 19:8-12"]},
+      {id:'kadesh',x:42,y:65,name:"Kadesh-Barnea",color:"#e65100",desc:"Israel's 12 spies sent from here; 10 gave a bad report. Because of unbelief, a whole generation was condemned to 40 years of wandering. Israel camped here for most of the 40 years.",verses:["Num 13-14","Deu 1:19-46"]},
+      {id:'nebo',x:48,y:58,name:"Mt. Nebo",color:"#388e3c",desc:"Moses's final resting place. He viewed the Promised Land from here but was not allowed to enter. Moses died at 120 years old — his eyes undimmed, his strength unabated.",verses:["Deu 34:1-12"]},
+      {id:'jordan',x:48,y:57,name:"Jordan River Crossing",color:"#1565c0",desc:"Joshua led Israel across the Jordan on dry ground (mirroring the Red Sea crossing). 12 stones set up as memorial. Israel entered the Promised Land.",verses:["Jos 3-4"]},
+    ]
+  },
+  paul:{
+    title:"Paul's Missionary Journeys (~46–57 AD)",
+    description:"Three apostolic journeys that planted churches across the Roman Empire",
+    pins:[
+      {id:'antioch',x:55,y:48,name:"Antioch (Syria)",color:"#1a237e",desc:"Home base for all three of Paul's missionary journeys. First place believers were called 'Christians' (Acts 11:26). Major Gentile church planting center.",verses:["Acts 11:26","Acts 13:1-3"]},
+      {id:'ephesus',x:47,y:50,name:"Ephesus",color:"#7b1fa2",desc:"Paul's longest stay (3 years) during 3rd journey. Major commercial city, center of Artemis worship. Paul wrote 1 Corinthians from here. A riot erupted over his preaching affecting idol sales.",verses:["Acts 19","Eph 1:1"]},
+      {id:'corinth',x:48,y:54,name:"Corinth",color:"#e65100",desc:"Paul stayed 18 months on his 2nd journey, planting the church. A cosmopolitan port city famous for immorality. He wrote Romans from here, and 1-2 Corinthians TO here.",verses:["Acts 18:1-18","1Co 1:2"]},
+      {id:'philippi',x:50,y:51,name:"Philippi",color:"#388e3c",desc:"Paul's first European church (2nd journey). Lydia was the first convert. Paul and Silas were imprisoned and miraculously freed by an earthquake, leading to the jailer's conversion.",verses:["Acts 16:11-40","Php 1:1"]},
+      {id:'athens',x:48,y:54,name:"Athens",color:"#f57f17",desc:"Paul preached on the Areopagus (Mars Hill), engaging Greek philosophers with the 'unknown God.' Some believed, including Dionysius the Areopagite.",verses:["Acts 17:16-34"]},
+      {id:'rome',x:35,y:50,name:"Rome",color:"#b71c1c",desc:"Paul arrived as a prisoner (~60 AD), spent 2 years under house arrest preaching freely. He wrote Prison Epistles (Eph, Php, Col, Phm) from here. Tradition holds he was martyred here under Nero (~67 AD).",verses:["Acts 28:14-31","Rom 1:7","Php 4:22"]},
+      {id:'jerusalem',x:53,y:58,name:"Jerusalem",color:"#c62828",desc:"Paul returned to Jerusalem at end of 3rd journey, was arrested in the Temple. His arrest initiated the events leading to his appeal to Caesar and journey to Rome.",verses:["Acts 21:17-23:11"]},
+    ]
+  }
+};
+
+// ============================================================
+// STATE MANAGEMENT
+// ============================================================
+let APP_STATE = {
+  currentBook: 'gen',
+  currentChapter: 1,
+  currentVerse: null,
+  activeTab: 'reader',
+  sidebarOpen: window.innerWidth >= 768,
+  rightPanelOpen: window.innerWidth >= 1024,
+  darkMode: false,
+  fontSize: 17,
+  fontFamily: 'serif',
+  lineHeight: 1.85,
+  selectedVerse: null,
+  selectedVerseKey: null,
+  genealogySubTab: 'tree',
+  notesSubTab: 'notes',
+  rightSubTab: 'commentary',
+  aiApiKey: localStorage.getItem('ai_api_key') || '',
+  aiProvider: localStorage.getItem('ai_provider') || 'openai',
+  chatHistory: [],
+  bibleData: {...BIBLE_SEED},
+  highlights: JSON.parse(localStorage.getItem('bible_highlights') || '{}'),
+  notes: JSON.parse(localStorage.getItem('bible_notes') || '{}'),
+  bookmarks: JSON.parse(localStorage.getItem('bible_bookmarks') || '[]'),
+  mapMode: 'abraham',
+  selectedMapPin: null,
+};
+
+// ============================================================
+// INDEXEDDB ENGINE
+// ============================================================
+let db;
+function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open('ScriptureDB', 2);
+    req.onupgradeneeded = (e) => {
+      const database = e.target.result;
+      if (!database.objectStoreNames.contains('bibleText')) database.createObjectStore('bibleText', {keyPath:'id'});
+      if (!database.objectStoreNames.contains('highlights')) database.createObjectStore('highlights', {keyPath:'id'});
+      if (!database.objectStoreNames.contains('notes')) database.createObjectStore('notes', {keyPath:'id'});
+      if (!database.objectStoreNames.contains('bookmarks')) database.createObjectStore('bookmarks', {keyPath:'id'});
+      if (!database.objectStoreNames.contains('settings')) database.createObjectStore('settings', {keyPath:'id'});
+    };
+    req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+    req.onerror = (e) => reject(e);
+  });
+}
+
+function dbGet(storeName, key) {
+  return new Promise((resolve) => {
+    if (!db) { resolve(null); return; }
+    try {
+      const tx = db.transaction(storeName, 'readonly');
+      const req = tx.objectStore(storeName).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch(e) { resolve(null); }
+  });
+}
+
+function dbPut(storeName, data) {
+  return new Promise((resolve) => {
+    if (!db) { resolve(); return; }
+    try {
+      const tx = db.transaction(storeName, 'readwrite');
+      tx.objectStore(storeName).put(data);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => resolve();
+    } catch(e) { resolve(); }
+  });
+}
+
+async function fetchAndCacheBook(bookId) {
+  // Try IndexedDB cache first
+  const cached = await dbGet('bibleText', bookId);
+  if (cached && cached.data) {
+    APP_STATE.bibleData[bookId] = cached.data;
+    return cached.data;
+  }
+
+  // Try fetching from public KJV CDN (graceful fallback to seed data)
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
+  if (!bookMeta) return null;
+
+  // Map internal IDs to KJV JSON repo naming
+  const nameMap = {gen:'genesis',exo:'exodus',lev:'leviticus',num:'numbers',deu:'deuteronomy',jos:'joshua',jdg:'judges',rut:'ruth','1sa':'1samuel','2sa':'2samuel','1ki':'1kings','2ki':'2kings','1ch':'1chronicles','2ch':'2chronicles',ezr:'ezra',neh:'nehemiah',est:'esther',job:'job',psa:'psalms',pro:'proverbs',ecc:'ecclesiastes',sng:'songofsolomon',isa:'isaiah',jer:'jeremiah',lam:'lamentations',ezk:'ezekiel',dan:'daniel',hos:'hosea',jol:'joel',amo:'amos',oba:'obadiah',jon:'jonah',mic:'micah',nam:'nahum',hab:'habakkuk',zep:'zephaniah',hag:'haggai',zec:'zechariah',mal:'malachi',mat:'matthew',mrk:'mark',luk:'luke',jhn:'john',act:'acts',rom:'romans','1co':'1corinthians','2co':'2corinthians',gal:'galatians',eph:'ephesians',php:'philippians',col:'colossians','1th':'1thessalonians','2th':'2thessalonians','1ti':'1timothy','2ti':'2timothy',tit:'titus',phm:'philemon',heb:'hebrews',jas:'james','1pe':'1peter','2pe':'2peter','1jn':'1john','2jn':'2john','3jn':'3john',jud:'jude',rev:'revelation'};
+
+  const urlName = nameMap[bookId] || bookId;
+  try {
+    const resp = await fetch(`https://raw.githubusercontent.com/aruljohn/Bible-kjv/master/${urlName}.json`, {signal: AbortSignal.timeout(8000)});
+    if (resp.ok) {
+      const kjvData = await resp.json();
+      // Convert KJV JSON format to our format
+      const converted = {};
+      if (kjvData.chapters) {
+        kjvData.chapters.forEach((ch, ci) => {
+          converted[ci+1] = {};
+          ch.verses.forEach((v, vi) => {
+            converted[ci+1][vi+1] = v.text;
+          });
+        });
+      }
+      APP_STATE.bibleData[bookId] = converted;
+      await dbPut('bibleText', {id: bookId, data: converted, fetched: Date.now()});
+      return converted;
+    }
+  } catch(e) {
+    // Network unavailable or CORS — use seed data
+  }
+  return APP_STATE.bibleData[bookId] || generatePlaceholderChapters(bookMeta);
+}
+
+function generatePlaceholderChapters(bookMeta) {
+  const data = {};
+  for (let c = 1; c <= bookMeta.chapters; c++) {
+    data[c] = {};
+    // Generate placeholder verses
+    for (let v = 1; v <= 10; v++) {
+      data[c][v] = `[${bookMeta.name} ${c}:${v} — Connect to internet to load full text, or use the seed data included for key passages.]`;
+    }
+  }
+  return data;
+}
+
+// ============================================================
+// UI INITIALIZATION
+// ============================================================
+async function initApp() {
+  updateLoadingBar(10, "Opening database...");
+  await initDB();
+
+  updateLoadingBar(25, "Loading settings...");
+  await loadSettings();
+
+  updateLoadingBar(40, "Building book navigator...");
+  buildBookList();
+
+  updateLoadingBar(60, "Loading Bible text...");
+  await fetchAndCacheBook(APP_STATE.currentBook);
+
+  updateLoadingBar(80, "Rendering reader...");
+  renderChapter();
+  updateChapterDisplay();
+  renderRightPanel();
+  renderNotesTab();
+
+  updateLoadingBar(90, "Building maps & genealogy...");
+  buildMaps();
+  renderGenealogyTab();
+
+  updateLoadingBar(100, "Ready!");
+  await new Promise(r => setTimeout(r, 400));
+
+  document.getElementById('loading-screen').style.opacity = '0';
+  document.getElementById('loading-screen').style.transition = 'opacity 0.4s';
+  setTimeout(() => document.getElementById('loading-screen').style.display = 'none', 400);
+
+  // Init AI chat
+  initAIChat();
+
+  // Check if tablet to auto-show sidebar
+  if (window.innerWidth >= 768) {
+    document.getElementById('sidebar').classList.add('open');
+    APP_STATE.sidebarOpen = true;
+  }
+  if (window.innerWidth >= 1024) {
+    document.getElementById('right-panel').classList.add('open');
+    APP_STATE.rightPanelOpen = true;
+  }
+
+  // Touch swipe support
+  setupSwipeGestures();
+
+  // Save state periodically
+  setInterval(saveSettings, 30000);
+}
+
+function updateLoadingBar(pct, msg) {
+  document.getElementById('loading-bar').style.width = pct + '%';
+  document.getElementById('loading-msg').textContent = msg;
+}
+
+async function loadSettings() {
+  const settings = await dbGet('settings', 'main');
+  if (settings) {
+    APP_STATE.darkMode = settings.darkMode || false;
+    APP_STATE.fontSize = settings.fontSize || 17;
+    APP_STATE.fontFamily = settings.fontFamily || 'serif';
+    APP_STATE.lineHeight = settings.lineHeight || 1.85;
+    APP_STATE.currentBook = settings.currentBook || 'gen';
+    APP_STATE.currentChapter = settings.currentChapter || 1;
+  }
+  applyTheme();
+  applyReaderSettings();
+}
+
+async function saveSettings() {
+  await dbPut('settings', {
+    id: 'main',
+    darkMode: APP_STATE.darkMode,
+    fontSize: APP_STATE.fontSize,
+    fontFamily: APP_STATE.fontFamily,
+    lineHeight: APP_STATE.lineHeight,
+    currentBook: APP_STATE.currentBook,
+    currentChapter: APP_STATE.currentChapter,
+  });
+}
+
+// ============================================================
+// BOOK LIST
+// ============================================================
+function buildBookList() {
+  const container = document.getElementById('book-list');
+  const OT = BIBLE_BOOKS.filter(b => b.testament === 'OT');
+  const NT = BIBLE_BOOKS.filter(b => b.testament === 'NT');
+
+  let html = '<div class="testament-label">Old Testament</div>';
+  OT.forEach(book => {
+    html += `<div class="book-item${book.id === APP_STATE.currentBook ? ' active' : ''}" data-book="${book.id}" onclick="selectBook('${book.id}')">
+      <span class="book-abbr">${book.abbr}</span>
+      <span>${book.name}</span>
+    </div>`;
+  });
+  html += '<div class="testament-label">New Testament</div>';
+  NT.forEach(book => {
+    html += `<div class="book-item${book.id === APP_STATE.currentBook ? ' active' : ''}" data-book="${book.id}" onclick="selectBook('${book.id}')">
+      <span class="book-abbr">${book.abbr}</span>
+      <span>${book.name}</span>
+    </div>`;
+  });
+  container.innerHTML = html;
+}
+
+function filterBooks(query) {
+  const items = document.querySelectorAll('.book-item');
+  const q = query.toLowerCase();
+  items.forEach(item => {
+    const name = item.textContent.toLowerCase();
+    item.style.display = name.includes(q) ? '' : 'none';
+  });
+}
+
+async function selectBook(bookId) {
+  APP_STATE.currentBook = bookId;
+  APP_STATE.currentChapter = 1;
+  buildBookList();
+  showToast(`Loading ${BIBLE_BOOKS.find(b => b.id === bookId).name}...`);
+
+  // Fetch the book
+  await fetchAndCacheBook(bookId);
+
+  updateChapterDisplay();
+  renderChapter();
+  renderRightPanel();
+  updateBookmarkBtn();
+
+  // On mobile, close sidebar after selection
+  if (window.innerWidth < 768) {
+    toggleSidebar(false);
+  }
+}
+
+// ============================================================
+// READER
+// ============================================================
+function renderChapter() {
+  const container = document.getElementById('verse-container');
+  const bookId = APP_STATE.currentBook;
+  const chap = APP_STATE.currentChapter;
+  const bookData = APP_STATE.bibleData[bookId];
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
+
+  if (!bookData || !bookData[chap]) {
+    container.innerHTML = `<div class="empty-state"><span class="material-icons-round">hourglass_top</span><p>Loading ${bookMeta.name} ${chap}...<br>Connect to internet for full text.</p></div>`;
+    fetchAndCacheBook(bookId).then(() => renderChapter());
+    return;
+  }
+
+  const verses = bookData[chap];
+  let html = `<div class="chapter-heading">${bookMeta.name} ${chap}</div>`;
+
+  const verseNums = Object.keys(verses).map(Number).sort((a, b) => a - b);
+  verseNums.forEach(vNum => {
+    const key = `${bookId}_${chap}_${vNum}`;
+    const highlight = APP_STATE.highlights[key];
+    const hasNote = !!APP_STATE.notes[key];
+    html += `<div class="verse-row${highlight ? ' highlight-'+highlight : ''}" 
+      id="verse-${vNum}"
+      data-key="${key}"
+      data-verse="${vNum}"
+      onclick="selectVerse('${key}', ${vNum}, event)"
+      oncontextmenu="selectVerse('${key}', ${vNum}, event, true)">
+      <span class="verse-num">${vNum}</span>
+      <span class="verse-text">${escapeHTML(verses[vNum])}</span>
+      ${hasNote ? '<span class="verse-note-dot" title="Has note"></span>' : ''}
+    </div>`;
+  });
+
+  container.innerHTML = html;
+  container.classList.add('slide-in-right');
+  setTimeout(() => container.classList.remove('slide-in-right'), 300);
+
+  // Scroll to top
+  document.getElementById('reader-area').scrollTop = 0;
+}
+
+function escapeHTML(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function updateChapterDisplay() {
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === APP_STATE.currentBook);
+  document.getElementById('chapter-display').textContent = `${bookMeta.name} ${APP_STATE.currentChapter}`;
+  document.title = `${bookMeta.name} ${APP_STATE.currentChapter} — Scripture`;
+  updateBookmarkBtn();
+}
+
+async function navigateChapter(dir) {
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === APP_STATE.currentBook);
+  let newChap = APP_STATE.currentChapter + dir;
+
+  if (newChap < 1) {
+    // Go to previous book
+    const idx = BIBLE_BOOKS.findIndex(b => b.id === APP_STATE.currentBook);
+    if (idx > 0) {
+      APP_STATE.currentBook = BIBLE_BOOKS[idx-1].id;
+      const prevMeta = BIBLE_BOOKS[idx-1];
+      APP_STATE.currentChapter = prevMeta.chapters;
+    } else return;
+  } else if (newChap > bookMeta.chapters) {
+    // Go to next book
+    const idx = BIBLE_BOOKS.findIndex(b => b.id === APP_STATE.currentBook);
+    if (idx < BIBLE_BOOKS.length - 1) {
+      APP_STATE.currentBook = BIBLE_BOOKS[idx+1].id;
+      APP_STATE.currentChapter = 1;
+    } else return;
+  } else {
+    APP_STATE.currentChapter = newChap;
+  }
+
+  document.getElementById('verse-container').classList.add(dir > 0 ? 'slide-in-right' : 'slide-in-left');
+  await fetchAndCacheBook(APP_STATE.currentBook);
+  buildBookList();
+  updateChapterDisplay();
+  renderChapter();
+  renderRightPanel();
+  saveSettings();
+}
+
+// ============================================================
+// CHAPTER PICKER
+// ============================================================
+function openChapterPicker() {
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === APP_STATE.currentBook);
+  let chapHtml = '';
+  for (let c = 1; c <= bookMeta.chapters; c++) {
+    chapHtml += `<button class="ch-btn${c === APP_STATE.currentChapter ? ' active' : ''}" onclick="selectChapter(${c});">${c}</button>`;
+  }
+
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">${bookMeta.name} — Select Chapter</div>
+    <div class="sheet-body">
+      <div class="chapter-grid">${chapHtml}</div>
+    </div>
+  `, true);
+}
+
+function selectChapter(ch) {
+  APP_STATE.currentChapter = ch;
+  closeModal();
+  updateChapterDisplay();
+  renderChapter();
+  renderRightPanel();
+  saveSettings();
+}
+
+// ============================================================
+// VERSE INTERACTION
+// ============================================================
+function selectVerse(key, verseNum, event, isContext = false) {
+  if (event) {
+    event.preventDefault();
+    if (event.type === 'contextmenu') isContext = true;
+  }
+
+  // Deselect previous
+  document.querySelectorAll('.verse-row.selected').forEach(el => el.classList.remove('selected'));
+
+  const el = document.getElementById(`verse-${verseNum}`);
+  if (el) el.classList.add('selected');
+
+  APP_STATE.selectedVerse = verseNum;
+  APP_STATE.selectedVerseKey = key;
+
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  document.getElementById('ctx-header').textContent = `${bookMeta?.name || ''} ${parts[1]}:${parts[2]}`;
+
+  // Show context menu
+  showContextMenu(event || {clientX: window.innerWidth/2, clientY: window.innerHeight/2});
+}
+
+function showContextMenu(event) {
+  const menu = document.getElementById('context-menu');
+  menu.classList.remove('hidden');
+  const x = Math.min(event.clientX, window.innerWidth - 250);
+  const y = Math.min(event.clientY, window.innerHeight - 250);
+  menu.style.left = x + 'px';
+  menu.style.top = y + 'px';
+}
+
+function closeContextMenu() {
+  document.getElementById('context-menu').classList.add('hidden');
+  document.querySelectorAll('.verse-row.selected').forEach(el => el.classList.remove('selected'));
+  APP_STATE.selectedVerseKey = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (!document.getElementById('context-menu').contains(e.target) &&
+      !e.target.closest('.verse-row')) {
+    closeContextMenu();
+  }
+});
+
+function applyHighlight(color) {
+  const key = APP_STATE.selectedVerseKey;
+  if (!key) return;
+
+  if (color === null) {
+    delete APP_STATE.highlights[key];
+  } else {
+    APP_STATE.highlights[key] = color;
+  }
+  localStorage.setItem('bible_highlights', JSON.stringify(APP_STATE.highlights));
+  dbPut('highlights', {id: 'all', data: APP_STATE.highlights});
+  renderChapter();
+  closeContextMenu();
+  showToast(color ? 'Highlight applied' : 'Highlight removed');
+}
+
+function bookmarkVerse() {
+  const key = APP_STATE.selectedVerseKey;
+  if (!key) return;
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  const ref = `${bookMeta.name} ${parts[1]}:${parts[2]}`;
+  const bookData = APP_STATE.bibleData[parts[0]];
+  const preview = bookData?.[parts[1]]?.[parts[2]] || '';
+
+  const existing = APP_STATE.bookmarks.findIndex(b => b.key === key);
+  if (existing >= 0) {
+    APP_STATE.bookmarks.splice(existing, 1);
+    showToast('Bookmark removed');
+  } else {
+    APP_STATE.bookmarks.unshift({key, ref, preview: preview.substring(0,100), date: new Date().toISOString()});
+    showToast('Verse bookmarked');
+  }
+  localStorage.setItem('bible_bookmarks', JSON.stringify(APP_STATE.bookmarks));
+  dbPut('bookmarks', {id: 'all', data: APP_STATE.bookmarks});
+  closeContextMenu();
+  updateBookmarkBtn();
+}
+
+function toggleBookmark() {
+  const key = `${APP_STATE.currentBook}_${APP_STATE.currentChapter}`;
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === APP_STATE.currentBook);
+  const ref = `${bookMeta.name} ${APP_STATE.currentChapter}`;
+  const existing = APP_STATE.bookmarks.findIndex(b => b.key === key);
+  if (existing >= 0) {
+    APP_STATE.bookmarks.splice(existing, 1);
+    showToast('Bookmark removed');
+  } else {
+    APP_STATE.bookmarks.unshift({key, ref, preview: `Chapter ${APP_STATE.currentChapter}`, date: new Date().toISOString()});
+    showToast('Chapter bookmarked');
+  }
+  localStorage.setItem('bible_bookmarks', JSON.stringify(APP_STATE.bookmarks));
+  updateBookmarkBtn();
+}
+
+function updateBookmarkBtn() {
+  const key = `${APP_STATE.currentBook}_${APP_STATE.currentChapter}`;
+  const isBookmarked = APP_STATE.bookmarks.some(b => b.key === key);
+  const btn = document.getElementById('bookmark-btn');
+  if (btn) btn.querySelector('span').textContent = isBookmarked ? 'bookmark' : 'bookmark_border';
+}
+
+function openNoteEditor() {
+  const key = APP_STATE.selectedVerseKey;
+  if (!key) return;
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  const ref = `${bookMeta.name} ${parts[1]}:${parts[2]}`;
+  const existing = APP_STATE.notes[key] || '';
+  closeContextMenu();
+
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Note — ${ref}</div>
+    <div class="sheet-body" style="padding:12px 16px;">
+      <textarea class="note-textarea" id="note-input" placeholder="Write your note here...">${escapeHTML(existing)}</textarea>
+      <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end;">
+        ${existing ? `<button onclick="deleteNote('${key}')" style="padding:10px 18px;border-radius:20px;border:1px solid var(--md-error);background:transparent;color:var(--md-error);cursor:pointer;font-weight:600;">Delete</button>` : ''}
+        <button onclick="closeModal()" style="padding:10px 18px;border-radius:20px;border:1px solid var(--md-outline);background:transparent;color:var(--md-on-surface);cursor:pointer;">Cancel</button>
+        <button onclick="saveNote('${key}')" style="padding:10px 20px;border-radius:20px;background:var(--md-primary);color:#fff;border:none;cursor:pointer;font-weight:600;">Save Note</button>
+      </div>
+    </div>
+  `, true);
+}
+
+function saveNote(key) {
+  const text = document.getElementById('note-input').value.trim();
+  if (text) {
+    APP_STATE.notes[key] = text;
+    localStorage.setItem('bible_notes', JSON.stringify(APP_STATE.notes));
+    dbPut('notes', {id: 'all', data: APP_STATE.notes});
+    showToast('Note saved');
+  }
+  closeModal();
+  renderChapter();
+  if (APP_STATE.notesSubTab === 'notes') renderNotesTab();
+}
+
+function deleteNote(key) {
+  delete APP_STATE.notes[key];
+  localStorage.setItem('bible_notes', JSON.stringify(APP_STATE.notes));
+  closeModal();
+  renderChapter();
+  showToast('Note deleted');
+  if (APP_STATE.notesSubTab === 'notes') renderNotesTab();
+}
+
+function copyVerse() {
+  const key = APP_STATE.selectedVerseKey;
+  if (!key) return;
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  const text = APP_STATE.bibleData[parts[0]]?.[parts[1]]?.[parts[2]] || '';
+  const ref = `${bookMeta.name} ${parts[1]}:${parts[2]} (ESV)`;
+  navigator.clipboard?.writeText(`"${text}" — ${ref}`).then(() => showToast('Verse copied!')).catch(() => showToast('Copy failed'));
+  closeContextMenu();
+}
+
+function shareVerse() {
+  const key = APP_STATE.selectedVerseKey;
+  if (!key) return;
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  const text = APP_STATE.bibleData[parts[0]]?.[parts[1]]?.[parts[2]] || '';
+  const ref = `${bookMeta.name} ${parts[1]}:${parts[2]} (ESV)`;
+  if (navigator.share) {
+    navigator.share({title: ref, text: `"${text}" — ${ref}`, url: window.location.href});
+  } else {
+    copyVerse();
+  }
+  closeContextMenu();
+}
+
+// ============================================================
+// RIGHT PANEL
+// ============================================================
+function renderRightPanel() {
+  if (!APP_STATE.rightPanelOpen) return;
+  renderRightSubTab(APP_STATE.rightSubTab);
+}
+
+function switchRightTab(tab, el) {
+  APP_STATE.rightSubTab = tab;
+  document.querySelectorAll('#right-tabs .tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderRightSubTab(tab);
+}
+
+function renderRightSubTab(tab) {
+  const container = document.getElementById('right-panel-content');
+  const bookId = APP_STATE.currentBook;
+  const chap = APP_STATE.currentChapter;
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
+  const ctx = BOOK_CONTEXT[bookId];
+
+  if (tab === 'commentary') {
+    // Show commentary for current chapter verses
+    let html = '';
+    const verseKey = APP_STATE.selectedVerseKey || `${bookId}_${chap}_1`;
+    const commentary = COMMENTARIES[verseKey];
+    if (commentary) {
+      const parts = verseKey.split('_');
+      const ref = `${bookMeta.name} ${parts[1]}:${parts[2]}`;
+      html += `<div class="info-card">
+        <div class="commentary-verse-ref">${ref}</div>
+        <div class="commentary-text">${commentary.text}</div>
+      </div>`;
+    }
+
+    // List available commentaries for this chapter
+    const chapCommentaries = Object.entries(COMMENTARIES).filter(([k]) => k.startsWith(`${bookId}_${chap}_`));
+    if (chapCommentaries.length > 0) {
+      html += `<div style="padding:8px 16px;font-size:12px;font-weight:700;color:var(--md-on-surface-variant);text-transform:uppercase;letter-spacing:1px;">Verse Commentaries</div>`;
+      chapCommentaries.forEach(([key, data]) => {
+        const parts = key.split('_');
+        html += `<div class="cross-ref-item" onclick="showCommentary('${key}')">
+          <span class="cross-ref-badge">${bookMeta.name} ${parts[1]}:${parts[2]}</span>
+          <span>${data.text.substring(0, 80)}...</span>
+        </div>`;
+      });
+    }
+
+    if (!html) {
+      html = `<div class="empty-state"><span class="material-icons-round">library_books</span><p>Tap a verse in the reader to see commentary for it.</p></div>`;
+    }
+    container.innerHTML = html;
+
+  } else if (tab === 'context') {
+    if (!ctx) {
+      container.innerHTML = `<div class="empty-state"><span class="material-icons-round">info</span><p>No detailed context available for ${bookMeta.name} yet.</p></div>`;
+      return;
+    }
+    let html = `<div class="info-card">
+      <div class="era-badge"><span class="material-icons-round" style="font-size:14px;">schedule</span>${ctx.setting || ''}</div>
+      <div class="info-card-title">${bookMeta.name} — Book Overview</div>
+      <div class="info-row"><span class="info-label">Author</span><span class="info-value">${ctx.author}</span></div>
+      <div class="info-row"><span class="info-label">Date Written</span><span class="info-value">${ctx.date}</span></div>
+      <div class="info-row"><span class="info-label">Audience</span><span class="info-value">${ctx.audience}</span></div>
+      <div class="divider"></div>
+      <div style="font-size:13px;color:var(--md-on-surface);line-height:1.6;">${ctx.summary}</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Key Themes</div>
+      <div>${(ctx.themes||[]).map(t => `<span class="tag">${t}</span>`).join('')}</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Theological Intent</div>
+      <div style="font-size:13px;color:var(--md-on-surface);line-height:1.6;">${ctx.theologicalIntent || ''}</div>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">Key Verses</div>
+      ${(ctx.keyVerses||[]).map(v => `<div class="cross-ref-item" onclick="navigateToRef('${bookId}', '${v}')"><span class="cross-ref-badge">${bookMeta.abbr} ${v}</span></div>`).join('')}
+    </div>`;
+    container.innerHTML = html;
+
+  } else if (tab === 'crossrefs') {
+    const verseKey = APP_STATE.selectedVerseKey || Object.keys(CROSS_REFS).find(k => k.startsWith(bookId)) || '';
+    const refs = CROSS_REFS[verseKey] || [];
+    const allRefs = Object.entries(CROSS_REFS).filter(([k]) => k.startsWith(bookId));
+
+    let html = '';
+    if (refs.length > 0) {
+      const parts = verseKey.split('_');
+      html += `<div style="padding:8px 16px;font-size:12px;font-weight:700;color:var(--md-on-surface-variant);text-transform:uppercase;">For ${bookMeta.name} ${parts[1]}:${parts[2]}</div>`;
+      refs.forEach(r => {
+        html += `<div class="cross-ref-item" onclick="showToast('${r}')">
+          <span class="material-icons-round" style="font-size:16px;color:var(--md-secondary);flex-shrink:0;">link</span>
+          <span class="cross-ref-badge">${r}</span>
+        </div>`;
+      });
+    }
+
+    if (allRefs.length > 0) {
+      html += `<div style="padding:8px 16px;font-size:12px;font-weight:700;color:var(--md-on-surface-variant);text-transform:uppercase;margin-top:8px;">All ${bookMeta.name} Cross-Refs</div>`;
+      allRefs.forEach(([key, refs]) => {
+        const parts = key.split('_');
+        refs.forEach(r => {
+          html += `<div class="cross-ref-item">
+            <span class="cross-ref-badge">${bookMeta.abbr} ${parts[1]}:${parts[2]}</span>
+            <span style="color:var(--md-primary);font-weight:600;">${r}</span>
+          </div>`;
+        });
+      });
+    }
+
+    if (!html) {
+      html = `<div class="empty-state"><span class="material-icons-round">link</span><p>Tap a verse to see its cross-references.</p></div>`;
+    }
+    container.innerHTML = html;
+  }
+}
+
+function showCommentary(key) {
+  const commentary = COMMENTARIES[key];
+  if (!commentary) return;
+  const parts = key.split('_');
+  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+  const ref = `${bookMeta.name} ${parts[1]}:${parts[2]}`;
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Commentary — ${ref}</div>
+    <div class="sheet-body" style="padding:16px;">
+      <div class="commentary-verse-ref">${ref}</div>
+      <div class="commentary-text" style="line-height:1.8;">${commentary.text}</div>
+    </div>
+  `, true);
+}
+
+// ============================================================
+// NOTES & BOOKMARKS TAB
+// ============================================================
+function switchNotesTab(tab, el) {
+  APP_STATE.notesSubTab = tab;
+  document.querySelectorAll('#view-notes .tab-bar .tab-item').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderNotesTab();
+}
+
+function renderNotesTab() {
+  const container = document.getElementById('notes-content');
+  const tab = APP_STATE.notesSubTab;
+
+  if (tab === 'notes') {
+    const entries = Object.entries(APP_STATE.notes);
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="empty-state"><span class="material-icons-round">note_alt</span><p>No notes yet. Long-press a verse to add a note.</p></div>`;
+      return;
+    }
+    container.innerHTML = entries.map(([key, text]) => {
+      const parts = key.split('_');
+      const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+      const ref = bookMeta ? `${bookMeta.name} ${parts[1]}:${parts[2]}` : key;
+      return `<div class="note-card" onclick="goToVerse('${key}')">
+        <div class="note-ref">${ref}</div>
+        <div class="note-text">${escapeHTML(text).substring(0,200)}${text.length>200?'...':''}</div>
+      </div>`;
+    }).join('');
+
+  } else if (tab === 'bookmarks') {
+    if (APP_STATE.bookmarks.length === 0) {
+      container.innerHTML = `<div class="empty-state"><span class="material-icons-round">bookmarks</span><p>No bookmarks yet. Tap the bookmark icon to save a chapter.</p></div>`;
+      return;
+    }
+    container.innerHTML = APP_STATE.bookmarks.map(bm => `
+      <div class="bookmark-item" onclick="goToVerse('${bm.key}')">
+        <span class="material-icons-round" style="color:var(--md-secondary);flex-shrink:0;">bookmark</span>
+        <div style="flex:1;min-width:0;">
+          <div class="bookmark-ref">${bm.ref}</div>
+          <div class="bookmark-preview">${escapeHTML(bm.preview)}</div>
+        </div>
+        <button onclick="event.stopPropagation();removeBookmark('${bm.key}')" style="background:none;border:none;cursor:pointer;color:var(--md-on-surface-variant);">
+          <span class="material-icons-round" style="font-size:18px;">close</span>
+        </button>
+      </div>
+    `).join('');
+
+  } else if (tab === 'highlights') {
+    const entries = Object.entries(APP_STATE.highlights);
+    if (entries.length === 0) {
+      container.innerHTML = `<div class="empty-state"><span class="material-icons-round">highlight</span><p>No highlights yet. Tap a verse to highlight it.</p></div>`;
+      return;
+    }
+    const colorNames = {y:'Yellow',g:'Green',b:'Blue',p:'Purple',r:'Red'};
+    const colorMap = {y:'#fdd835',g:'#4caf50',b:'#2196f3',p:'#9c27b0',r:'#f44336'};
+    container.innerHTML = entries.map(([key, color]) => {
+      const parts = key.split('_');
+      const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
+      const ref = bookMeta ? `${bookMeta.name} ${parts[1]}:${parts[2]}` : key;
+      const text = APP_STATE.bibleData[parts[0]]?.[parts[1]]?.[parts[2]] || '';
+      return `<div class="bookmark-item" onclick="goToVerse('${key}')">
+        <div style="width:16px;height:16px;border-radius:50%;background:${colorMap[color]||'#ccc'};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div class="bookmark-ref">${ref} <span style="font-size:11px;color:var(--md-on-surface-variant);">(${colorNames[color]||''})</span></div>
+          <div class="bookmark-preview">${escapeHTML(text)}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function removeBookmark(key) {
+  APP_STATE.bookmarks = APP_STATE.bookmarks.filter(b => b.key !== key);
+  localStorage.setItem('bible_bookmarks', JSON.stringify(APP_STATE.bookmarks));
+  renderNotesTab();
+  showToast('Bookmark removed');
+}
+
+async function goToVerse(key) {
+  const parts = key.split('_');
+  if (parts.length >= 2) {
+    APP_STATE.currentBook = parts[0];
+    APP_STATE.currentChapter = parseInt(parts[1]) || 1;
+    await fetchAndCacheBook(parts[0]);
+    switchTab('reader', document.getElementById('nav-reader'));
+    buildBookList();
+    updateChapterDisplay();
+    renderChapter();
+    renderRightPanel();
+    // Scroll to verse
+    setTimeout(() => {
+      const el = document.getElementById(`verse-${parts[2]}`);
+      if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 300);
+  }
+}
+
+// ============================================================
+// GENEALOGY
+// ============================================================
+function renderGenealogyTab() {
+  switchGenealogyTab(APP_STATE.genealogySubTab, document.querySelector('#genealogy-tabs .tab-item.active'));
+}
+
+function switchGenealogyTab(tab, el) {
+  APP_STATE.genealogySubTab = tab;
+  document.querySelectorAll('#genealogy-tabs .tab-item').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  const container = document.getElementById('genealogy-content');
+
+  if (tab === 'tree') {
+    let html = '<div class="gen-tree scrollable" style="overflow:auto;height:100%;">';
+    GENEALOGY_TREE.forEach(era => {
+      html += `<div class="gen-era">
+        <div class="gen-era-title">${era.era}</div>
+        <div class="gen-row">`;
+      era.people.forEach((p, i) => {
+        html += `<div class="gen-node" onclick="showCharacterDetail('${p.name}')">
+          <div class="gn-name">${p.name}</div>
+          ${p.age ? `<div class="gn-age">${p.age} yrs</div>` : ''}
+          ${p.note ? `<div class="gn-age" style="font-style:italic;">${p.note}</div>` : ''}
+        </div>`;
+        if (i < era.people.length - 1) {
+          html += `<div style="display:flex;align-items:center;color:var(--md-on-surface-variant);font-size:20px;padding-top:8px;">→</div>`;
+        }
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+  } else if (tab === 'characters') {
+    let html = '<div class="scrollable" style="height:100%;overflow-y:auto;">';
+    // Group by era
+    const eras = [...new Set(BIBLE_CHARACTERS.map(c => c.era))];
+    eras.forEach(era => {
+      const chars = BIBLE_CHARACTERS.filter(c => c.era === era);
+      html += `<div style="padding:10px 12px 4px;font-size:11px;font-weight:700;color:var(--md-secondary);text-transform:uppercase;letter-spacing:1px;">${era}</div>`;
+      chars.forEach(c => {
+        html += `<div class="character-card" onclick="showCharacterDetail('${c.name}')">
+          <div class="char-avatar" style="background:${c.gender==='F'?'rgba(233,30,99,0.1)':'rgba(26,35,126,0.1)'};">${c.emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="char-name">${c.name}</div>
+            <div class="char-desc">${c.role}</div>
+            <div class="char-ref">${c.ref}</div>
+          </div>
+          ${c.age ? `<div style="font-size:12px;font-weight:700;color:var(--md-secondary);flex-shrink:0;">${c.age} yrs</div>` : ''}
+        </div>`;
+      });
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+  } else if (tab === 'timeline') {
+    let html = '<div class="scrollable" style="height:100%;overflow-y:auto;"><div class="timeline" style="padding-left:50px;">';
+    BIBLICAL_ERAS.forEach(era => {
+      html += `<div class="timeline-item">
+        <div style="position:absolute;left:-20px;display:flex;flex-direction:column;align-items:center;gap:4px;">
+          <div style="width:14px;height:14px;border-radius:50%;background:${era.color};border:2px solid var(--md-surface);z-index:1;"></div>
+        </div>
+        <div class="timeline-content">
+          <div class="timeline-year">${era.years}</div>
+          <div class="timeline-event" style="color:${era.color};">${era.name}</div>
+          <div class="timeline-desc">${era.desc}</div>
+        </div>
+      </div>`;
+    });
+    html += '</div></div>';
+    container.innerHTML = html;
+
+  } else if (tab === 'ages') {
+    const aged = BIBLE_CHARACTERS.filter(c => c.age).sort((a,b) => (b.age||0) - (a.age||0));
+    let html = '<div class="scrollable" style="height:100%;overflow-y:auto;">';
+    html += `<div style="padding:12px 16px;font-size:13px;color:var(--md-on-surface-variant);">Biblical ages from oldest to youngest. Ante-Diluvian ages reflect pre-Flood lifespans.</div>`;
+    aged.forEach((c, i) => {
+      const pct = (c.age / 969) * 100;
+      html += `<div class="bookmark-item">
+        <div style="width:28px;font-size:13px;font-weight:700;color:var(--md-secondary);flex-shrink:0;">${i+1}.</div>
+        <div style="font-size:20px;flex-shrink:0;">${c.emoji}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;color:var(--md-on-surface);">${c.name}</div>
+          <div style="height:6px;background:var(--md-surface-variant);border-radius:3px;margin:4px 0;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${c.age===969?'#e53935':'var(--md-primary)'};border-radius:3px;"></div>
+          </div>
+          <div style="font-size:11px;color:var(--md-on-surface-variant);">${c.era}</div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:var(--md-on-surface);flex-shrink:0;">${c.age}</div>
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+}
+
+function showCharacterDetail(name) {
+  const char = BIBLE_CHARACTERS.find(c => c.name === name || name.includes(c.name.split('/')[0]));
+  if (!char) { showToast('Character: ' + name); return; }
+
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="font-family:'Crimson Pro',serif;font-size:22px;">${char.emoji} ${char.name}</div>
+    <div class="sheet-body" style="padding:0 16px 20px;">
+      <div class="era-badge"><span class="material-icons-round" style="font-size:14px;">history_edu</span>${char.era}</div>
+      <div class="info-card" style="margin:0 0 12px;">
+        <div class="info-row"><span class="info-label">Role</span><span class="info-value">${char.role}</span></div>
+        <div class="info-row"><span class="info-label">Born</span><span class="info-value">${char.born}</span></div>
+        <div class="info-row"><span class="info-label">Died / Lifespan</span><span class="info-value">${char.died}${char.age?' ('+char.age+' years)':''}</span></div>
+        ${char.spouse?`<div class="info-row"><span class="info-label">Spouse</span><span class="info-value">${char.spouse}</span></div>`:''}
+        ${char.children?`<div class="info-row"><span class="info-label">Children</span><span class="info-value">${Array.isArray(char.children)?char.children.join(', '):char.children}</span></div>`:''}
+        <div class="info-row"><span class="info-label">Scripture</span><span class="info-value" style="color:var(--md-primary);">${char.ref}</span></div>
+      </div>
+      <div style="font-size:14px;color:var(--md-on-surface);line-height:1.7;background:var(--md-surface-variant);border-radius:12px;padding:14px;">${char.desc}</div>
+    </div>
+  `, true);
+}
+
+// ============================================================
+// MAPS
+// ============================================================
+function buildMaps() {
+  const tabBar = document.getElementById('map-tabs');
+  tabBar.innerHTML = Object.entries(BIBLE_MAPS).map(([key, map]) =>
+    `<div class="map-tab${key === APP_STATE.mapMode ? ' active' : ''}" onclick="switchMap('${key}', this)">${map.title.split('(')[0].trim()}</div>`
+  ).join('');
+  renderMap();
+}
+
+function switchMap(key, el) {
+  APP_STATE.mapMode = key;
+  document.querySelectorAll('.map-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderMap();
+}
+
+function renderMap() {
+  const container = document.getElementById('map-content');
+  const mapData = BIBLE_MAPS[APP_STATE.mapMode];
+
+  // SVG-based map with Middle East outline
+  const svg = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;min-width:500px;min-height:400px;background:linear-gradient(180deg,#b3d4f5 0%,#c9e3f7 40%,#d4e6c3 60%,#e8d5a3 100%);">
+    <!-- Mediterranean Sea -->
+    <path d="M20,40 Q30,35 45,38 Q50,35 55,38 Q60,35 65,42 Q60,48 50,45 Q40,48 30,45 Z" fill="#4a90d9" opacity="0.6"/>
+    <text x="35" y="44" font-size="3" fill="#1a237e" font-style="italic">Mediterranean Sea</text>
+
+    <!-- Red Sea -->
+    <path d="M42,68 L45,85 L47,85 L44,68 Z" fill="#4a90d9" opacity="0.5"/>
+    <text x="46" y="76" font-size="2.5" fill="#1a237e" font-style="italic" transform="rotate(15,46,76)">Red Sea</text>
+
+    <!-- Persian Gulf -->
+    <path d="M68,60 Q72,58 75,62 Q73,65 70,65 Z" fill="#4a90d9" opacity="0.5"/>
+
+    <!-- Nile River -->
+    <path d="M33,65 Q31,60 30,55 Q31,50 32,45" stroke="#4a90d9" fill="none" stroke-width="0.8" opacity="0.8"/>
+    <text x="27" y="55" font-size="2.5" fill="#1565c0" transform="rotate(-30,27,55)">Nile</text>
+
+    <!-- Jordan River area -->
+    <path d="M47,50 L48,57 L48,62" stroke="#4a90d9" fill="none" stroke-width="0.5" opacity="0.8"/>
+
+    <!-- Euphrates River -->
+    <path d="M55,42 Q60,44 65,48 Q68,52 70,58" stroke="#4a90d9" fill="none" stroke-width="0.8" opacity="0.7"/>
+    <text x="61" y="47" font-size="2.5" fill="#1565c0" transform="rotate(30,61,47)">Euphrates</text>
+
+    <!-- Tigris -->
+    <path d="M60,42 Q64,46 66,52 Q68,56 70,62" stroke="#4a90d9" fill="none" stroke-width="0.6" opacity="0.7"/>
+
+    <!-- Sinai Peninsula -->
+    <path d="M40,62 L44,70 L48,62 Z" fill="#d4a96a" opacity="0.6"/>
+    <text x="40" y="68" font-size="2.5" fill="#5d4037">Sinai</text>
+
+    <!-- Canaan/Israel area -->
+    <rect x="44" y="50" width="8" height="12" rx="1" fill="#c8e6c9" opacity="0.5"/>
+    <text x="45" y="57" font-size="2.5" fill="#2e7d32">Canaan</text>
+
+    <!-- Egypt -->
+    <rect x="28" y="60" width="15" height="12" rx="1" fill="#fff9c4" opacity="0.4"/>
+    <text x="30" y="67" font-size="3" fill="#f57f17">Egypt</text>
+
+    <!-- Babylon/Mesopotamia -->
+    <rect x="60" y="50" width="15" height="15" rx="1" fill="#fff8e1" opacity="0.4"/>
+    <text x="62" y="60" font-size="3" fill="#e65100">Mesopotamia</text>
+
+    <!-- Map Pins -->
+    ${mapData.pins.map(pin => `
+      <g class="map-pin" onclick="showMapPin('${pin.id}')" transform="translate(${pin.x},${pin.y})">
+        <circle r="3" fill="${pin.color}" opacity="0.9" stroke="white" stroke-width="0.8"/>
+        <circle r="1.2" fill="white"/>
+        <text x="4" y="-3" font-size="3" fill="${pin.color}" font-weight="bold" style="pointer-events:none;">${pin.name}</text>
+      </g>
+    `).join('')}
+
+    <!-- Compass Rose -->
+    <g transform="translate(88,88)">
+      <circle r="5" fill="rgba(255,255,255,0.8)" stroke="#999" stroke-width="0.5"/>
+      <text x="0" y="-2.5" text-anchor="middle" font-size="3" fill="#333" font-weight="bold">N</text>
+      <text x="0" y="5" text-anchor="middle" font-size="3" fill="#333">S</text>
+      <text x="-4" y="1.5" text-anchor="middle" font-size="3" fill="#333">W</text>
+      <text x="4" y="1.5" text-anchor="middle" font-size="3" fill="#333">E</text>
+      <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.5"/>
+      <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.5"/>
+    </g>
+  </svg>`;
+
+  container.innerHTML = `
+    <div class="map-container">
+      <div class="map-svg-wrapper">${svg}</div>
+      <div class="map-controls">
+        <button class="map-btn" onclick="showToast('Use scroll/pinch to zoom')" title="Zoom"><span class="material-icons-round" style="font-size:18px;">zoom_in</span></button>
+        <button class="map-btn" onclick="showMapInfo()" title="Info"><span class="material-icons-round" style="font-size:18px;">info</span></button>
+      </div>
+      <div class="map-legend">
+        <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--md-on-surface);">${mapData.title}</div>
+        ${mapData.pins.map(p => `<div class="map-legend-item"><div class="map-legend-dot" style="background:${p.color}"></div>${p.name}</div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function showMapPin(pinId) {
+  const mapData = BIBLE_MAPS[APP_STATE.mapMode];
+  const pin = mapData.pins.find(p => p.id === pinId);
+  if (!pin) return;
+
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">📍 ${pin.name}</div>
+    <div class="sheet-body" style="padding:0 16px 20px;">
+      <div style="font-size:14px;color:var(--md-on-surface);line-height:1.7;margin-bottom:12px;">${pin.desc}</div>
+      ${pin.verses && pin.verses.length ? `<div style="font-size:12px;font-weight:700;color:var(--md-on-surface-variant);margin-bottom:6px;">KEY SCRIPTURES</div>` +
+        pin.verses.map(v => `<div style="padding:4px 0;color:var(--md-primary);font-size:13px;font-weight:600;">📖 ${v}</div>`).join('') : ''}
+    </div>
+  `, true);
+}
+
+function showMapInfo() {
+  const mapData = BIBLE_MAPS[APP_STATE.mapMode];
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">${mapData.title}</div>
+    <div class="sheet-body" style="padding:0 16px 20px;">
+      <div style="font-size:14px;color:var(--md-on-surface);line-height:1.7;">${mapData.description}</div>
+    </div>
+  `, true);
+}
+
+// ============================================================
+// AI CHAT
+// ============================================================
+function initAIChat() {
+  const msgs = document.getElementById('chat-messages');
+  const welcomeMsg = {
+    role: 'assistant',
+    content: `**Welcome to the AI Bible Scholar!** 🙏\n\nI'm here to help you with:\n• Theological questions & word studies\n• Cross-reference exploration\n• Historical & cultural context\n• Character studies & genealogy\n\nTo get started, please configure your API key (OpenAI or Gemini) using the ⚙️ button above.\n\n*"Your word is a lamp to my feet and a light to my path." — Psalm 119:105*`
+  };
+  APP_STATE.chatHistory = [welcomeMsg];
+  renderChatMessages();
+}
+
+function renderChatMessages() {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = APP_STATE.chatHistory.map(msg => {
+    if (msg.role === 'system') return `<div class="chat-bubble system">${msg.content}</div>`;
+    const isUser = msg.role === 'user';
+    return `<div class="chat-bubble ${isUser ? 'user' : 'ai'}">${formatChatText(msg.content)}</div>`;
+  }).join('');
+  container.scrollTop = container.scrollHeight;
+}
+
+function formatChatText(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+    .replace(/\n/g, '<br>')
+    .replace(/•/g, '•');
+}
+
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+
+  APP_STATE.chatHistory.push({role: 'user', content: text});
+  renderChatMessages();
+
+  // Show typing indicator
+  const container = document.getElementById('chat-messages');
+  const typing = document.createElement('div');
+  typing.className = 'chat-bubble ai';
+  typing.innerHTML = '<div class="typing-dots"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
+  container.appendChild(typing);
+  container.scrollTop = container.scrollHeight;
+
+  document.getElementById('chat-send').disabled = true;
+
+  try {
+    const response = await callAIAPI(text);
+    typing.remove();
+    APP_STATE.chatHistory.push({role: 'assistant', content: response});
+  } catch (err) {
+    typing.remove();
+    let errMsg = '';
+    if (!navigator.onLine) {
+      errMsg = '📵 **No internet connection.** Your notes and highlights are saved offline, but the AI assistant requires network access. Please connect and try again.';
+    } else if (!APP_STATE.aiApiKey) {
+      errMsg = '🔑 **API key not configured.** Please tap the ⚙️ button above to enter your OpenAI or Gemini API key.\n\n*Your key is stored locally and never sent to our servers.*';
+    } else {
+      errMsg = `⚠️ **Error:** ${err.message || 'Unable to reach the AI service. Please check your API key and try again.'}`;
+    }
+    APP_STATE.chatHistory.push({role: 'assistant', content: errMsg});
+  }
+
+  document.getElementById('chat-send').disabled = false;
+  renderChatMessages();
+}
+
+async function callAIAPI(userMessage) {
+  if (!APP_STATE.aiApiKey) throw new Error('No API key configured');
+
+  const systemPrompt = `You are an expert Biblical scholar with deep knowledge of biblical theology, ancient history, biblical languages (Hebrew, Greek, Aramaic), church history, and hermeneutics. You specialize in the ESV (English Standard Version) translation.
+
+Current reading context: ${BIBLE_BOOKS.find(b=>b.id===APP_STATE.currentBook)?.name} ${APP_STATE.currentChapter}
+
+Guidelines:
+- Provide accurate, scholarly responses grounded in Scripture
+- Reference specific Bible passages (Book Chapter:Verse format)
+- For word studies, include original Hebrew/Greek terms when relevant
+- Note different theological perspectives where they exist (Reformed, Arminian, Catholic, etc.)
+- Keep responses clear, warm, and pastoral in tone
+- For historical context, reference ancient Near Eastern background
+- Always cite Scripture references in ESV`;
+
+  if (APP_STATE.aiProvider === 'gemini') {
+    const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${APP_STATE.aiApiKey}`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        contents: [{role:'user', parts:[{text: systemPrompt + '\n\nUser: ' + userMessage}]}],
+        generationConfig: {temperature: 0.7, maxOutputTokens: 1024}
+      })
+    });
+    if (!resp.ok) throw new Error(`Gemini API error: ${resp.status}`);
+    const data = await resp.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+  } else {
+    // OpenAI
+    const resp = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${APP_STATE.aiApiKey}`},
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {role: 'system', content: systemPrompt},
+          ...APP_STATE.chatHistory.filter(m => m.role !== 'system').map(m => ({role: m.role === 'assistant' ? 'assistant' : 'user', content: m.content})),
+        ],
+        max_tokens: 1024,
+        temperature: 0.7
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `OpenAI API error: ${resp.status}`);
+    }
+    const data = await resp.json();
+    return data.choices?.[0]?.message?.content || 'No response generated.';
+  }
+}
+
+function openAISettings() {
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">AI Bible Scholar Settings</div>
+    <div class="sheet-body" style="padding:16px;">
+      <div class="settings-title">AI Provider</div>
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <div class="chip${APP_STATE.aiProvider==='openai'?' active':''}" onclick="setProvider('openai',this)">OpenAI (GPT-4o Mini)</div>
+        <div class="chip${APP_STATE.aiProvider==='gemini'?' active':''}" onclick="setProvider('gemini',this)">Google Gemini</div>
+      </div>
+      <div class="settings-title">API Key</div>
+      <div style="margin-bottom:8px;">
+        <input type="password" id="ai-key-input" value="${APP_STATE.aiApiKey}" placeholder="sk-... or your Gemini key"
+          style="width:100%;padding:10px 14px;border:1px solid var(--md-outline);border-radius:10px;font-size:14px;background:var(--md-surface);color:var(--md-on-surface);outline:none;"/>
+      </div>
+      <div style="font-size:12px;color:var(--md-on-surface-variant);margin-bottom:20px;">
+        Your API key is stored only in your device's local storage. It is never sent to any server except the AI provider's API directly from your browser.
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--md-on-surface-variant);margin-bottom:8px;">GET AN API KEY</div>
+      <div style="font-size:12px;color:var(--md-on-surface-variant);line-height:1.6;margin-bottom:16px;">
+        • <strong>OpenAI:</strong> Visit platform.openai.com → API Keys<br>
+        • <strong>Gemini:</strong> Visit aistudio.google.com → Get API Key
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button onclick="closeModal()" style="padding:10px 18px;border-radius:20px;border:1px solid var(--md-outline);background:transparent;color:var(--md-on-surface);cursor:pointer;">Cancel</button>
+        <button onclick="saveAIKey()" style="padding:10px 20px;border-radius:20px;background:var(--md-primary);color:#fff;border:none;cursor:pointer;font-weight:600;">Save</button>
+      </div>
+    </div>
+  `, true);
+}
+
+function setProvider(provider, el) {
+  APP_STATE.aiProvider = provider;
+  document.querySelectorAll('#modals .chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  localStorage.setItem('ai_provider', provider);
+}
+
+function saveAIKey() {
+  APP_STATE.aiApiKey = document.getElementById('ai-key-input').value.trim();
+  localStorage.setItem('ai_api_key', APP_STATE.aiApiKey);
+  closeModal();
+  showToast('API key saved!');
+}
+
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+function openSearchModal() {
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Search the Bible</div>
+    <div style="padding:12px 16px;background:var(--md-surface);border-bottom:1px solid var(--md-outline);">
+      <div class="search-field" style="border-color:var(--md-primary);">
+        <span class="material-icons-round">search</span>
+        <input type="text" id="global-search" placeholder="Search verses, topics, or references..." autofocus
+          style="border:none;background:transparent;flex:1;font-size:15px;color:var(--md-on-surface);outline:none;"
+          oninput="runSearch(this.value)" onkeydown="if(event.key==='Enter')runSearch(document.getElementById('global-search').value);"/>
+      </div>
+    </div>
+    <div class="sheet-body">
+      <div id="search-results">
+        <div style="padding:16px;font-size:13px;color:var(--md-on-surface-variant);">Start typing to search across loaded Bible books and all key passages...</div>
+        <div style="padding:0 16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--md-on-surface-variant);margin-bottom:8px;">QUICK NAVIGATE</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            ${['Genesis 1','John 3','Psalms 23','Isaiah 53','Romans 8','Matthew 5','Philippians 4','Revelation 21'].map(r => 
+              `<div class="chip" onclick="quickNav('${r}')">${r}</div>`
+            ).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  `, true);
+  setTimeout(() => document.getElementById('global-search')?.focus(), 100);
+}
+
+function quickNav(ref) {
+  const parts = ref.split(' ');
+  const bookName = parts.slice(0,-1).join(' ');
+  const chap = parseInt(parts[parts.length-1]);
+  const book = BIBLE_BOOKS.find(b => b.name.toLowerCase().includes(bookName.toLowerCase()) || b.abbr.toLowerCase() === bookName.toLowerCase());
+  if (book && chap) {
+    APP_STATE.currentBook = book.id;
+    APP_STATE.currentChapter = chap;
+    closeModal();
+    fetchAndCacheBook(book.id).then(() => {
+      buildBookList();
+      updateChapterDisplay();
+      renderChapter();
+      renderRightPanel();
+      switchTab('reader', document.getElementById('nav-reader'));
+    });
+  }
+}
+
+function runSearch(query) {
+  const q = query.toLowerCase().trim();
+  const container = document.getElementById('search-results');
+  if (!q || q.length < 2) {
+    container.innerHTML = '<div style="padding:16px;font-size:13px;color:var(--md-on-surface-variant);">Type at least 2 characters to search...</div>';
+    return;
+  }
+
+  let results = [];
+  // Search through all loaded Bible data
+  Object.entries(APP_STATE.bibleData).forEach(([bookId, chapters]) => {
+    const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
+    Object.entries(chapters).forEach(([chapNum, verses]) => {
+      Object.entries(verses).forEach(([verseNum, text]) => {
+        if (text.toLowerCase().includes(q)) {
+          results.push({bookId, chapNum, verseNum, text, ref: `${bookMeta.name} ${chapNum}:${verseNum}`});
+        }
+      });
+    });
+  });
+
+  if (results.length === 0) {
+    container.innerHTML = `<div class="empty-state"><span class="material-icons-round">search_off</span><p>No results for "${escapeHTML(query)}"<br>Try different terms or load more books.</p></div>`;
+    return;
+  }
+
+  const maxResults = Math.min(results.length, 50);
+  const highlighted = (text) => text.replace(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), m => `<mark>${m}</mark>`);
+
+  container.innerHTML = `<div style="padding:8px 16px;font-size:12px;color:var(--md-on-surface-variant);">${results.length} result${results.length!==1?'s':''} found${results.length>50?' (showing 50)':''}</div>` +
+    results.slice(0, maxResults).map(r =>
+      `<div class="search-result-item" onclick="navigateToVerseFromSearch('${r.bookId}', ${r.chapNum}, ${r.verseNum})">
+        <div class="search-result-ref">${r.ref}</div>
+        <div class="search-result-text">${highlighted(escapeHTML(r.text))}</div>
+      </div>`
+    ).join('');
+}
+
+async function navigateToVerseFromSearch(bookId, chap, verse) {
+  APP_STATE.currentBook = bookId;
+  APP_STATE.currentChapter = parseInt(chap);
+  closeModal();
+  await fetchAndCacheBook(bookId);
+  buildBookList();
+  updateChapterDisplay();
+  renderChapter();
+  renderRightPanel();
+  switchTab('reader', document.getElementById('nav-reader'));
+  setTimeout(() => {
+    const el = document.getElementById(`verse-${verse}`);
+    if (el) el.scrollIntoView({behavior:'smooth', block:'center'});
+  }, 300);
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function openSettings() {
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Settings</div>
+    <div class="sheet-body">
+      <div class="settings-section">
+        <div class="settings-title">Appearance</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Dark Mode</div><div class="setting-desc">Switch to dark reading theme</div></div>
+          <button class="toggle-switch${APP_STATE.darkMode?' on':''}" onclick="toggleTheme();this.classList.toggle('on')"></button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Reader Typography</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Font Size</div><div class="setting-desc">Adjust reading font size</div></div>
+          <div class="font-size-row">
+            <button class="font-size-btn" onclick="changeFontSize(-1)">−</button>
+            <span class="font-size-display" id="fs-display">${APP_STATE.fontSize}px</span>
+            <button class="font-size-btn" onclick="changeFontSize(1)">+</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Font Family</div></div>
+          <select class="md-select" onchange="changeFontFamily(this.value)">
+            <option value="serif"${APP_STATE.fontFamily==='serif'?' selected':''}>Merriweather (Serif)</option>
+            <option value="crimson"${APP_STATE.fontFamily==='crimson'?' selected':''}>Crimson Pro</option>
+            <option value="sans"${APP_STATE.fontFamily==='sans'?' selected':''}>Inter (Sans-serif)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Line Spacing</div></div>
+          <div class="font-size-row">
+            <span style="font-size:12px;color:var(--md-on-surface-variant);">Compact</span>
+            <input type="range" min="1.4" max="2.4" step="0.1" value="${APP_STATE.lineHeight}"
+              oninput="changeLineHeight(parseFloat(this.value))"
+              style="width:100px;margin:0 8px;"/>
+            <span style="font-size:12px;color:var(--md-on-surface-variant);">Spacious</span>
+          </div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Data & Sync</div>
+        <div class="setting-row">
+          <div><div class="setting-label">Bible Translation</div><div class="setting-desc">ESV (English Standard Version)</div></div>
+          <span class="tag">ESV</span>
+        </div>
+        <div class="setting-row">
+          <div><div class="setting-label">Cached Books</div><div class="setting-desc">${Object.keys(APP_STATE.bibleData).length} books loaded offline</div></div>
+        </div>
+        <div class="setting-row">
+          <button onclick="clearCache()" style="padding:8px 16px;border-radius:20px;border:1px solid var(--md-error);background:transparent;color:var(--md-error);cursor:pointer;font-size:13px;">Clear Cache</button>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">Firebase Sync</div>
+        <div style="background:var(--md-surface-variant);border-radius:10px;padding:12px;font-size:12px;color:var(--md-on-surface-variant);line-height:1.6;">
+          Firebase Firestore sync is available when configured.<br>
+          Edit the <code>FIREBASE_CONFIG</code> constant in the source code with your Firebase project credentials to enable cloud sync of highlights, notes, and bookmarks.
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-title">About</div>
+        <div style="font-size:13px;color:var(--md-on-surface-variant);line-height:1.6;">
+          <strong>Scripture Bible App</strong> v2.0<br>
+          Complete Bible Reader with ESV Text<br>
+          All scripture is God-breathed (2 Tim 3:16)<br><br>
+          <em>"Your word is a lamp to my feet and a light to my path." — Ps 119:105</em>
+        </div>
+      </div>
+    </div>
+  `, true);
+}
+
+function changeFontSize(delta) {
+  APP_STATE.fontSize = Math.min(28, Math.max(13, APP_STATE.fontSize + delta));
+  const display = document.getElementById('fs-display');
+  if (display) display.textContent = APP_STATE.fontSize + 'px';
+  applyReaderSettings();
+  saveSettings();
+}
+
+function changeFontFamily(family) {
+  APP_STATE.fontFamily = family;
+  applyReaderSettings();
+  saveSettings();
+}
+
+function changeLineHeight(val) {
+  APP_STATE.lineHeight = val;
+  applyReaderSettings();
+}
+
+function applyReaderSettings() {
+  const fontMap = {
+    'serif': "'Merriweather', Georgia, serif",
+    'crimson': "'Crimson Pro', Georgia, serif",
+    'sans': "'Inter', system-ui, sans-serif"
+  };
+  document.documentElement.style.setProperty('--font-size-reader', APP_STATE.fontSize + 'px');
+  document.documentElement.style.setProperty('--font-reader', fontMap[APP_STATE.fontFamily] || fontMap.serif);
+  document.documentElement.style.setProperty('--line-height-reader', APP_STATE.lineHeight);
+}
+
+function clearCache() {
+  if (confirm('Clear all cached Bible text? (Seed data will remain)')) {
+    APP_STATE.bibleData = {...BIBLE_SEED};
+    if (db) {
+      try {
+        const tx = db.transaction('bibleText', 'readwrite');
+        tx.objectStore('bibleText').clear();
+      } catch(e) {}
+    }
+    closeModal();
+    showToast('Cache cleared. Data will reload from network.');
+    renderChapter();
+  }
+}
+
+// ============================================================
+// FIREBASE CONFIG (Placeholder - Replace with your credentials)
+// ============================================================
+const FIREBASE_CONFIG = {
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Firebase is loaded via CDN when configured
+let firebaseApp = null;
+let firestoreDb = null;
+
+function initFirebase() {
+  // Uncomment when Firebase credentials are configured:
+  /*
+  const script1 = document.createElement('script');
+  script1.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js';
+  script1.onload = () => {
+    const script2 = document.createElement('script');
+    script2.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js';
+    script2.onload = () => {
+      firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+      firestoreDb = firebase.firestore();
+      setupFirestoreSync();
+    };
+    document.head.appendChild(script2);
+  };
+  document.head.appendChild(script1);
+  */
+}
+
+async function syncToFirestore(userId) {
+  if (!firestoreDb) return;
+  try {
+    await firestoreDb.collection('users').doc(userId).set({
+      highlights: APP_STATE.highlights,
+      notes: APP_STATE.notes,
+      bookmarks: APP_STATE.bookmarks,
+      lastSync: new Date().toISOString(),
+      readingPosition: {book: APP_STATE.currentBook, chapter: APP_STATE.currentChapter}
+    }, {merge: true});
+    showToast('Synced to cloud ☁️');
+  } catch(e) {
+    console.warn('Firestore sync failed:', e);
+  }
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function toggleTheme() {
+  APP_STATE.darkMode = !APP_STATE.darkMode;
+  applyTheme();
+  saveSettings();
+}
+
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', APP_STATE.darkMode ? 'dark' : 'light');
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.querySelector('span').textContent = APP_STATE.darkMode ? 'light_mode' : 'dark_mode';
+  document.querySelector('meta[name="theme-color"]').content = APP_STATE.darkMode ? '#12111a' : '#1a237e';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function switchTab(tab, el) {
+  APP_STATE.activeTab = tab;
+
+  // Update bottom nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  // Hide all views
+  ['reader','genealogy','maps','notes','ai'].forEach(v => {
+    const el = document.getElementById(`view-${v}`);
+    if (el) el.classList.add('hidden');
+  });
+
+  // Show active view
+  const activeView = document.getElementById(`view-${tab}`);
+  if (activeView) activeView.classList.remove('hidden');
+
+  // Trigger rendering for views
+  if (tab === 'genealogy') renderGenealogyTab();
+  if (tab === 'notes') renderNotesTab();
+  if (tab === 'maps') renderMap();
+
+  // On tablet: right panel only relevant for reader
+  if (tab !== 'reader') {
+    document.getElementById('commentary-toggle').style.opacity = '0.4';
+  } else {
+    document.getElementById('commentary-toggle').style.opacity = '1';
+  }
+}
+
+function toggleSidebar(force) {
+  const sidebar = document.getElementById('sidebar');
+  if (typeof force === 'boolean') {
+    APP_STATE.sidebarOpen = force;
+  } else {
+    APP_STATE.sidebarOpen = !APP_STATE.sidebarOpen;
+  }
+  sidebar.classList.toggle('open', APP_STATE.sidebarOpen);
+}
+
+function toggleRightPanel() {
+  const panel = document.getElementById('right-panel');
+  APP_STATE.rightPanelOpen = !APP_STATE.rightPanelOpen;
+  panel.classList.toggle('open', APP_STATE.rightPanelOpen);
+  if (APP_STATE.rightPanelOpen) renderRightPanel();
+}
+
+// ============================================================
+// MODAL SYSTEM
+// ============================================================
+function showModal(content, isSheet = false) {
+  const modals = document.getElementById('modals');
+  const overlay = document.createElement('div');
+  overlay.className = `modal-overlay${isSheet ? '' : ' centered'}`;
+  overlay.id = 'active-modal';
+  const card = document.createElement('div');
+  card.className = isSheet ? 'bottom-sheet' : 'dialog-card';
+  card.innerHTML = content;
+  overlay.appendChild(card);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeModal();
+  });
+  modals.innerHTML = '';
+  modals.appendChild(overlay);
+}
+
+function closeModal() {
+  document.getElementById('modals').innerHTML = '';
+}
+
+// ============================================================
+// TOAST NOTIFICATION
+// ============================================================
+function showToast(msg, duration = 2500) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, duration);
+}
+
+// ============================================================
+// SWIPE GESTURES
+// ============================================================
+function setupSwipeGestures() {
+  let startX = 0, startY = 0;
+  const reader = document.getElementById('reader-area');
+
+  reader.addEventListener('touchstart', (e) => {
+    startX = e.touches[0].clientX;
+    startY = e.touches[0].clientY;
+  }, {passive: true});
+
+  reader.addEventListener('touchend', (e) => {
+    const dx = e.changedTouches[0].clientX - startX;
+    const dy = e.changedTouches[0].clientY - startY;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+      if (dx < 0) navigateChapter(1);
+      else navigateChapter(-1);
+    }
+  }, {passive: true});
+}
+
+// ============================================================
+// HELPER: Navigate to ref string like "Eph 2:4-5"
+// ============================================================
+function navigateToRef(bookId, verseRef) {
+  const parts = verseRef.split(':');
+  const chap = parseInt(parts[0]);
+  if (!isNaN(chap)) {
+    APP_STATE.currentBook = bookId;
+    APP_STATE.currentChapter = chap;
+    fetchAndCacheBook(bookId).then(() => {
+      buildBookList();
+      updateChapterDisplay();
+      renderChapter();
+      renderRightPanel();
+      switchTab('reader', document.getElementById('nav-reader'));
+    });
+  }
+}
+
+// ============================================================
+// RESPONSIVE HANDLER
+// ============================================================
+window.addEventListener('resize', () => {
+  if (window.innerWidth >= 768) {
+    if (!APP_STATE.sidebarOpen) {
+      document.getElementById('sidebar').classList.add('open');
+      APP_STATE.sidebarOpen = true;
+    }
+  }
+  if (window.innerWidth >= 1024) {
+    if (!APP_STATE.rightPanelOpen) {
+      document.getElementById('right-panel').classList.add('open');
+      APP_STATE.rightPanelOpen = true;
+    }
+  }
+});
+
+// ============================================================
+// BOOT
+// ============================================================
+window.addEventListener('DOMContentLoaded', initApp);
+</script>
+</body>
+</html>
