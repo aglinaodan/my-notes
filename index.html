@@ -584,27 +584,18 @@
 // BIBLE DATA ENGINE
 // ============================================================
   
-const ESV_API_KEY = 'fae3c0472ee72b55240160ec74416133ae45fcab';
-const ESV_API_BASE = 'https://api.esv.org/v3/passage/text/';
+// ESV text is fetched through a Firebase Cloud Function proxy (see /functions),
+// which holds the real ESV API key server-side and avoids the browser CORS
+// block on api.esv.org. Update this URL after you deploy the function.
+const ESV_PROXY_BASE = 'https://us-central1-my-notes-41182.cloudfunctions.net/esvPassage';
 
 async function fetchESVPassage(reference) {
-  const params = new URLSearchParams({
-    q: reference,                    // e.g., "Genesis 1"
-    'include-headings': false,
-    'include-footnotes': false,
-    'include-verse-numbers': true,
-    'include-short-copyright': false,
-    'include-passage-references': false,
-    'indent-poetry': false,
-    'indent-paragraphs': false,
-  });
+  const params = new URLSearchParams({ q: reference });
 
-  const resp = await fetch(`${ESV_API_BASE}?${params}`, {
-    headers: { 'Authorization': `Token ${ESV_API_KEY}` }
-  });
+  const resp = await fetch(`${ESV_PROXY_BASE}?${params}`);
 
   if (!resp.ok) {
-    throw new Error(`ESV API request failed: ${resp.status}`);
+    throw new Error(`ESV proxy request failed: ${resp.status}`);
   }
 
   const data = await resp.json();
