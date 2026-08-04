@@ -583,7 +583,30 @@
 // ============================================================
 // BIBLE DATA ENGINE
 // ============================================================
+  
+const ESV_API_KEY = 'f970b01e30fffa25ba30f3021ac6f0fcccc7f44c';
+const ESV_API_BASE = 'https://api.esv.org/v3/passage/text/';
 
+async function fetchESVPassage(reference) {
+  const params = new URLSearchParams({
+    q: reference,                    // e.g., "Genesis 1"
+    'include-headings': false,
+    'include-footnotes': false,
+    'include-verse-numbers': true,
+    'include-short-copyright': false,
+    'include-passage-references': false,
+    'indent-poetry': false,
+    'indent-paragraphs': false,
+  });
+
+  const resp = await fetch(`${ESV_API_BASE}?${params}`, {
+    headers: { 'Authorization': `Token ${ESV_API_KEY}` }
+  });
+  
+  const data = await resp.json();
+  return data.passages?.[0] || '';
+}
+  
 const BIBLE_BOOKS = [
   // OLD TESTAMENT
   {id:'gen',name:'Genesis',abbr:'Gen',chapters:50,testament:'OT',category:'Law'},
@@ -2484,7 +2507,7 @@ let firestoreDb = null;
 
 function initFirebase() {
   // Uncomment when Firebase credentials are configured:
-  /*
+  
   const script1 = document.createElement('script');
   script1.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js';
   script1.onload = () => {
@@ -2498,7 +2521,7 @@ function initFirebase() {
     document.head.appendChild(script2);
   };
   document.head.appendChild(script1);
-  */
+  
 }
 
 async function syncToFirestore(userId) {
@@ -2516,6 +2539,55 @@ async function syncToFirestore(userId) {
     console.warn('Firestore sync failed:', e);
   }
 }
+
+// ============================================================
+// ADDED WITH AUTH
+// ============================================================
+
+// Initialize Firebase Auth
+const auth = firebase.auth();
+const provider = new firebase.auth.GoogleAuthProvider();
+
+// Sign in with Google
+function signInWithGoogle() {
+  auth.signInWithPopup(provider)
+    .then(result => {
+      const user = result.user;
+      showToast(`Welcome, ${user.displayName}!`);
+      syncToFirestore(user.uid);
+    })
+    .catch(error => showToast('Sign-in failed: ' + error.message));
+}
+
+// Monitor auth state changes
+auth.onAuthStateChanged(user => {
+  if (user) {
+    // User is signed in — start background sync
+    setInterval(() => syncToFirestore(user.uid), 60000); // Every minute
+    loadFromFirestore(user.uid); // Load cloud data on login
+  }
+});
+
+// Load data from Firestore
+async function loadFromFirestore(userId) {
+  const doc = await firestoreDb.collection('users').doc(userId).get();
+  if (doc.exists) {
+    const data = doc.data();
+    // Merge with local data (local data wins for conflicts)
+    APP_STATE.highlights = { ...data.highlights, ...APP_STATE.highlights };
+    APP_STATE.notes = { ...data.notes, ...APP_STATE.notes };
+    // Merge bookmarks (deduplicate by key)
+    const allBookmarks = [...APP_STATE.bookmarks, ...(data.bookmarks || [])];
+    APP_STATE.bookmarks = allBookmarks.filter((bm, idx, arr) => 
+      arr.findIndex(b => b.key === bm.key) === idx
+    );
+    renderChapter(); // Re-render with cloud highlights
+    renderNotesTab();
+  }
+}
+// ============================================================
+// ADDED WITH AUTH
+// ============================================================
 
 // ============================================================
 // THEME
