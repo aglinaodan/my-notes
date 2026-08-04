@@ -584,7 +584,7 @@
 // BIBLE DATA ENGINE
 // ============================================================
   
-const ESV_API_KEY = 'f970b01e30fffa25ba30f3021ac6f0fcccc7f44c';
+const ESV_API_KEY = 'fae3c0472ee72b55240160ec74416133ae45fcab';
 const ESV_API_BASE = 'https://api.esv.org/v3/passage/text/';
 
 async function fetchESVPassage(reference) {
@@ -602,11 +602,49 @@ async function fetchESVPassage(reference) {
   const resp = await fetch(`${ESV_API_BASE}?${params}`, {
     headers: { 'Authorization': `Token ${ESV_API_KEY}` }
   });
-  
+
+  if (!resp.ok) {
+    throw new Error(`ESV API request failed: ${resp.status}`);
+  }
+
   const data = await resp.json();
   return data.passages?.[0] || '';
 }
-  
+
+// Splits ESV API text (verse numbers embedded like "[1] In the beginning...")
+// into {verseNumber: text}
+function parseESVChapterText(text) {
+  const verses = {};
+  const regex = /\[(\d+)\]\s*/g;
+  const markers = [];
+  let match;
+  while ((match = regex.exec(text)) !== null) {
+    markers.push({ verse: parseInt(match[1], 10), textStart: regex.lastIndex });
+  }
+  for (let i = 0; i < markers.length; i++) {
+    const start = markers[i].textStart;
+    const end = i + 1 < markers.length ? markers[i + 1].textStart - `[${markers[i + 1].verse}] `.length : text.length;
+    verses[markers[i].verse] = text.slice(start, end).replace(/\s+/g, ' ').trim();
+  }
+  return verses;
+}
+
+// Fetches every chapter of a book from the ESV API and assembles our
+// {chapter: {verse: text}} format
+async function fetchESVBook(bookMeta) {
+  const converted = {};
+  for (let c = 1; c <= bookMeta.chapters; c++) {
+    const raw = await fetchESVPassage(`${bookMeta.name} ${c}`);
+    const verses = parseESVChapterText(raw);
+    if (Object.keys(verses).length === 0) {
+      throw new Error(`ESV API returned no verses for ${bookMeta.name} ${c}`);
+    }
+    converted[c] = verses;
+  }
+  return converted;
+}
+
+
 const BIBLE_BOOKS = [
   // OLD TESTAMENT
   {id:'gen',name:'Genesis',abbr:'Gen',chapters:50,testament:'OT',category:'Law'},
@@ -1132,6 +1170,16 @@ async function fetchAndCacheBook(bookId) {
   const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
   if (!bookMeta) return null;
 
+  // Try ESV API first
+  try {
+    const converted = await fetchESVBook(bookMeta);
+    APP_STATE.bibleData[bookId] = converted;
+    await dbPut('bibleText', {id: bookId, data: converted, fetched: Date.now()});
+    return converted;
+  } catch(e) {
+    console.warn(`ESV API fetch failed for ${bookMeta.name}, falling back to KJV:`, e);
+  }
+
   // Map internal IDs to KJV JSON repo naming
   const nameMap = {gen:'genesis',exo:'exodus',lev:'leviticus',num:'numbers',deu:'deuteronomy',jos:'joshua',jdg:'judges',rut:'ruth','1sa':'1samuel','2sa':'2samuel','1ki':'1kings','2ki':'2kings','1ch':'1chronicles','2ch':'2chronicles',ezr:'ezra',neh:'nehemiah',est:'esther',job:'job',psa:'psalms',pro:'proverbs',ecc:'ecclesiastes',sng:'songofsolomon',isa:'isaiah',jer:'jeremiah',lam:'lamentations',ezk:'ezekiel',dan:'daniel',hos:'hosea',jol:'joel',amo:'amos',oba:'obadiah',jon:'jonah',mic:'micah',nam:'nahum',hab:'habakkuk',zep:'zephaniah',hag:'haggai',zec:'zechariah',mal:'malachi',mat:'matthew',mrk:'mark',luk:'luke',jhn:'john',act:'acts',rom:'romans','1co':'1corinthians','2co':'2corinthians',gal:'galatians',eph:'ephesians',php:'philippians',col:'colossians','1th':'1thessalonians','2th':'2thessalonians','1ti':'1timothy','2ti':'2timothy',tit:'titus',phm:'philemon',heb:'hebrews',jas:'james','1pe':'1peter','2pe':'2peter','1jn':'1john','2jn':'2john','3jn':'3john',jud:'jude',rev:'revelation'};
 
@@ -1207,6 +1255,9 @@ async function initApp() {
 
   // Init AI chat
   initAIChat();
+
+  // Load Firebase SDK (async, non-blocking)
+  initFirebase();
 
   // Check if tablet to auto-show sidebar
   if (window.innerWidth >= 768) {
@@ -2505,23 +2556,40 @@ const FIREBASE_CONFIG = {
 let firebaseApp = null;
 let firestoreDb = null;
 
+let auth = null;
+let provider = null;
+
 function initFirebase() {
-  // Uncomment when Firebase credentials are configured:
-  
   const script1 = document.createElement('script');
   script1.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js';
   script1.onload = () => {
     const script2 = document.createElement('script');
     script2.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js';
     script2.onload = () => {
-      firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
-      firestoreDb = firebase.firestore();
-      setupFirestoreSync();
+      const script3 = document.createElement('script');
+      script3.src = 'https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js';
+      script3.onload = () => {
+        firebaseApp = firebase.initializeApp(FIREBASE_CONFIG);
+        firestoreDb = firebase.firestore();
+        auth = firebase.auth();
+        provider = new firebase.auth.GoogleAuthProvider();
+
+        // Monitor auth state changes
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            // User is signed in — start background sync
+            setInterval(() => syncToFirestore(user.uid), 60000); // Every minute
+            loadFromFirestore(user.uid); // Load cloud data on login
+          }
+        });
+
+        setupFirestoreSync();
+      };
+      document.head.appendChild(script3);
     };
     document.head.appendChild(script2);
   };
   document.head.appendChild(script1);
-  
 }
 
 async function syncToFirestore(userId) {
@@ -2544,12 +2612,12 @@ async function syncToFirestore(userId) {
 // ADDED WITH AUTH
 // ============================================================
 
-// Initialize Firebase Auth
-const auth = firebase.auth();
-const provider = new firebase.auth.GoogleAuthProvider();
-
 // Sign in with Google
 function signInWithGoogle() {
+  if (!auth || !provider) {
+    showToast('Sign-in not ready yet — try again in a moment.');
+    return;
+  }
   auth.signInWithPopup(provider)
     .then(result => {
       const user = result.user;
@@ -2558,15 +2626,6 @@ function signInWithGoogle() {
     })
     .catch(error => showToast('Sign-in failed: ' + error.message));
 }
-
-// Monitor auth state changes
-auth.onAuthStateChanged(user => {
-  if (user) {
-    // User is signed in — start background sync
-    setInterval(() => syncToFirestore(user.uid), 60000); // Every minute
-    loadFromFirestore(user.uid); // Load cloud data on login
-  }
-});
 
 // Load data from Firestore
 async function loadFromFirestore(userId) {
