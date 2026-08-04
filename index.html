@@ -588,7 +588,7 @@
 // which holds the real ESV API key server-side and avoids the browser CORS
 // block on api.esv.org. Update this URL after you deploy the Worker —
 // Cloudflare gives you a URL like https://esv-passage-proxy.<your-subdomain>.workers.dev
-const ESV_PROXY_BASE = 'https://esv-passage-proxy.YOUR-SUBDOMAIN.workers.dev';
+const ESV_PROXY_BASE = 'https://esv-passage-proxy.sermonnotes-dan.workers.dev';
 
 async function fetchESVPassage(reference) {
   const params = new URLSearchParams({ q: reference });
