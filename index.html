@@ -72,22 +72,33 @@
 
   /* ========== APP SHELL ========== */
   #app { display: flex; flex-direction: column; height: 100vh; max-height: 100vh; background: var(--md-surface); }
-  #top-bar { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; height: 64px; min-height: 64px; background: var(--md-primary); color: #fff; z-index: 100; box-shadow: 0 2px 8px var(--md-shadow); }
+  #top-bar { display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; height: 64px; min-height: 64px; background: var(--md-primary); color: #fff; z-index: 120; box-shadow: 0 2px 8px var(--md-shadow); overflow-x: auto; overflow-y: hidden; scrollbar-width: none; -ms-overflow-style: none; }
+  #top-bar::-webkit-scrollbar { display: none; }
   [data-theme="dark"] #top-bar { background: #12111a; border-bottom: 1px solid #2b2930; }
-  #top-bar .logo { font-family: 'Crimson Pro', serif; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; color: #fff; flex-shrink: 0; }
-  #top-bar .spacer { flex: 1; }
+  #top-bar .logo { font-family: 'Crimson Pro', serif; font-size: 22px; font-weight: 600; letter-spacing: 0.5px; color: #fff; flex-shrink: 0; white-space: nowrap; }
+  #top-bar .spacer { flex: 1; min-width: 8px; }
   .icon-btn { width: 48px; height: 48px; border-radius: 50%; border: none; background: transparent; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; }
   .icon-btn:hover { background: rgba(255,255,255,0.12); }
   .icon-btn:active { background: rgba(255,255,255,0.22); }
   [data-theme="dark"] .icon-btn { color: var(--md-on-surface); }
+  @media (max-width: 420px) {
+    #top-bar .logo { font-size: 17px; }
+    .icon-btn { width: 40px; height: 40px; }
+    .icon-btn .material-icons-round { font-size: 21px; }
+    #top-bar { gap: 2px; padding: 0 4px; }
+  }
 
   /* ========== MAIN LAYOUT ========== */
   #main-layout { display: flex; flex: 1; overflow: hidden; }
-  #sidebar { width: 0; min-width: 0; overflow: hidden; background: var(--md-surface-variant); border-right: 1px solid var(--md-outline); transition: width 0.28s cubic-bezier(0.4,0,0.2,1), min-width 0.28s; display: flex; flex-direction: column; z-index: 50; }
-  #sidebar.open { width: var(--sidebar-width); min-width: var(--sidebar-width); }
+  #sidebar { position: fixed; top: 64px; left: 0; bottom: 0; width: var(--sidebar-width); max-width: 86vw; overflow: hidden; background: var(--md-surface-variant); border-right: 1px solid var(--md-outline); transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); transform: translateX(-100%); display: flex; flex-direction: column; z-index: 110; box-shadow: 4px 0 24px rgba(0,0,0,0.18); }
+  #sidebar.open { transform: translateX(0); }
+  #sidebar-backdrop { position: fixed; top: 64px; left: 0; right: 0; bottom: 0; background: var(--md-scrim); z-index: 105; opacity: 0; pointer-events: none; transition: opacity 0.22s ease; }
+  #sidebar-backdrop.open { opacity: 1; pointer-events: auto; }
   #content-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-  #right-panel { width: 0; min-width: 0; overflow: hidden; background: var(--md-surface-variant); border-left: 1px solid var(--md-outline); transition: width 0.28s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
-  #right-panel.open { width: 380px; min-width: 380px; }
+  /* NOTE: Commentary & Context used to be a right-side push panel (#right-panel).
+     It's now a bottom-sheet modal (see openCommentaryPanel()) built with the
+     existing showModal(..., true) bottom-sheet system, so no dedicated
+     panel CSS is needed here anymore. */
 
   /* ========== BOTTOM NAV (MOBILE) ========== */
   #bottom-nav { display: flex; height: 64px; min-height: 64px; background: var(--md-surface); border-top: 1px solid rgba(0,0,0,0.1); z-index: 100; }
@@ -111,13 +122,17 @@
   .book-list::-webkit-scrollbar { width: 4px; }
   .book-list::-webkit-scrollbar-track { background: transparent; }
   .book-list::-webkit-scrollbar-thumb { background: var(--md-outline); border-radius: 2px; }
-  .testament-label { padding: 10px 16px 4px; font-size: 11px; font-weight: 700; color: var(--md-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
-  .book-item { display: flex; align-items: center; padding: 10px 16px; cursor: pointer; border-radius: 4px; margin: 1px 4px; transition: background 0.15s; color: var(--md-on-surface); font-size: 14px; }
+  .testament-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 2px; align-items: start; }
+  .testament-col { display: flex; flex-direction: column; min-width: 0; }
+  .testament-label { padding: 10px 10px 4px; font-size: 11px; font-weight: 700; color: var(--md-secondary); text-transform: uppercase; letter-spacing: 1.2px; }
+  .book-item { display: flex; align-items: center; padding: 8px 8px; cursor: pointer; border-radius: 4px; margin: 1px 2px; transition: background 0.15s; color: var(--md-on-surface); font-size: 13px; gap: 4px; }
   .book-item:hover { background: rgba(0,0,0,0.05); }
   [data-theme="dark"] .book-item:hover { background: rgba(255,255,255,0.05); }
   .book-item.active { background: rgba(26,35,126,0.12); color: var(--md-primary); font-weight: 600; }
   [data-theme="dark"] .book-item.active { background: rgba(159,168,218,0.16); color: var(--md-primary-light); }
-  .book-item .book-abbr { font-size: 11px; color: var(--md-on-surface-variant); width: 32px; flex-shrink: 0; }
+  .book-item .book-abbr { font-size: 10px; color: var(--md-on-surface-variant); width: 24px; flex-shrink: 0; }
+  .book-item .book-name { flex: 1; min-width: 0; word-break: break-word; line-height: 1.25; }
+
 
   /* ========== READER ========== */
   #reader-area { flex: 1; overflow-y: auto; background: var(--reader-bg); scroll-behavior: smooth; position: relative; }
@@ -145,18 +160,21 @@
   .chapter-heading { font-family: 'Crimson Pro', serif; font-size: 28px; font-weight: 600; color: var(--md-on-surface); margin: 32px 0 16px; text-align: center; }
   .section-heading { font-family: var(--font-ui); font-size: 12px; font-weight: 700; color: var(--reader-verse-num); text-transform: uppercase; letter-spacing: 1.5px; margin: 20px 0 8px; }
 
-  /* ========== CONTEXT MENU ========== */
-  .context-menu { position: fixed; background: var(--md-surface); border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.18); z-index: 1000; min-width: 240px; overflow: hidden; border: 1px solid var(--md-outline); animation: menuIn 0.15s ease; }
-  @keyframes menuIn { from { opacity: 0; transform: scale(0.9) translateY(-4px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-  .context-menu-header { padding: 12px 16px 8px; font-size: 12px; color: var(--md-on-surface-variant); font-weight: 600; border-bottom: 1px solid var(--md-outline); }
-  .context-colors { display: flex; gap: 10px; padding: 12px 16px; }
-  .color-chip { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: transform 0.15s; border: 2px solid transparent; }
+  /* ========== CONTEXT MENU (bottom sheet toolbar, sits above bottom-nav) ========== */
+  .context-menu { position: fixed; left: 0; right: 0; bottom: 64px; background: var(--md-surface); box-shadow: 0 -4px 24px rgba(0,0,0,0.2); z-index: 1000; border-top: 1px solid var(--md-outline); overflow: hidden; animation: sheetUp 0.22s cubic-bezier(0.4,0,0.2,1); }
+  @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @media (min-width: 768px) {
+    .context-menu { bottom: 0; }
+  }
+  .context-row { display: flex; align-items: center; gap: 8px; height: 64px; padding: 0 12px; overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none; }
+  .context-row::-webkit-scrollbar { display: none; }
+  .context-divider { width: 1px; height: 28px; background: var(--md-outline); flex-shrink: 0; margin: 0 4px; }
+  .color-chip { width: 28px; height: 28px; border-radius: 50%; cursor: pointer; transition: transform 0.15s; border: 2px solid transparent; flex-shrink: 0; }
   .color-chip:hover { transform: scale(1.18); }
   .color-chip.y { background: #fdd835; } .color-chip.g { background: #4caf50; } .color-chip.b { background: #2196f3; } .color-chip.p { background: #9c27b0; } .color-chip.r { background: #f44336; } .color-chip.x { background: var(--md-surface-variant); border: 1px solid var(--md-outline); }
-  .context-actions { border-top: 1px solid var(--md-outline); }
-  .context-action { display: flex; align-items: center; gap: 12px; padding: 12px 16px; cursor: pointer; color: var(--md-on-surface); font-size: 14px; transition: background 0.15s; }
-  .context-action:hover { background: var(--md-surface-variant); }
-  .context-action .material-icons-round { font-size: 20px; color: var(--md-on-surface-variant); }
+  .context-icon-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: transparent; color: var(--md-on-surface-variant); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.15s; }
+  .context-icon-btn:hover { background: var(--md-surface-variant); }
+  .context-icon-btn .material-icons-round { font-size: 22px; }
 
   /* ========== CHAPTER PICKER ========== */
   .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; padding: 16px; }
@@ -170,6 +188,12 @@
   .modal-overlay.centered { align-items: center; }
   @keyframes overlayIn { from { opacity: 0; } to { opacity: 1; } }
   .bottom-sheet { background: var(--md-surface); border-radius: 28px 28px 0 0; width: 100%; max-height: 85vh; display: flex; flex-direction: column; animation: sheetIn 0.3s cubic-bezier(0.4,0,0.2,1); overflow: hidden; }
+  /* Commentary & Context modal specifically: keeps a consistent height across
+     its 3 tabs, since some (like Context) render noticeably less content
+     than others (Commentary, Cross-Refs) and would otherwise make the whole
+     sheet visibly shrink when switched to. */
+  .commentary-sheet { height: 65vh; max-height: 65vh; }
+  .commentary-sheet .sheet-body { flex: 1; min-height: 0; }
   @keyframes sheetIn { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
   .dialog-card { background: var(--md-surface); border-radius: 20px; width: calc(100% - 32px); max-width: 480px; max-height: 80vh; display: flex; flex-direction: column; animation: dialogIn 0.25s ease; overflow: hidden; }
   @keyframes dialogIn { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
@@ -195,36 +219,46 @@
 
   /* ========== GENEALOGY TREE ========== */
   #genealogy-canvas-wrapper { width: 100%; height: 100%; overflow: auto; position: relative; }
-  .gen-tree { position: relative; padding: 20px; min-width: 900px; }
+  .gen-tree { position: relative; padding: 20px; }
   .gen-era { margin-bottom: 32px; }
-  .gen-era-title { font-family: var(--font-ui); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--md-secondary); margin-bottom: 12px; padding: 4px 0; border-bottom: 1px dashed var(--md-outline); }
-  .gen-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 4px 0; }
-  .gen-node { background: var(--md-surface); border: 2px solid var(--md-primary); border-radius: 12px; padding: 8px 12px; min-width: 100px; text-align: center; cursor: pointer; transition: all 0.2s; position: relative; }
-  .gen-node:hover { background: var(--md-primary); color: #fff; transform: translateY(-2px); box-shadow: 0 4px 12px var(--md-shadow); }
-  [data-theme="dark"] .gen-node { background: var(--md-surface-variant); border-color: var(--md-primary-light); color: var(--md-on-surface); }
-  [data-theme="dark"] .gen-node:hover { background: var(--md-primary-light); color: #12111a; }
-  .gen-node .gn-name { font-size: 13px; font-weight: 600; }
-  .gen-node .gn-age { font-size: 10px; opacity: 0.7; margin-top: 2px; }
-  .gen-connector { text-align: center; color: var(--md-on-surface-variant); font-size: 18px; margin: 2px 0; }
-  .gen-node.female { border-color: #e91e63; }
-  .gen-node.female:hover { background: #e91e63; }
-  [data-theme="dark"] .gen-node.female { border-color: #f48fb1; }
+  .gen-era-title { font-family: var(--font-ui); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--md-secondary); margin-bottom: 4px; padding: 4px 0; border-bottom: 1px dashed var(--md-outline); }
+  /* Vertical lineage: a connecting line down the left with a dot per
+     person and a small down-chevron between generations, instead of a
+     horizontal row of "→" arrows. */
+  .gen-lineage { position: relative; padding-left: 40px; }
+  .gen-lineage::before { content: ''; position: absolute; left: 19px; top: 8px; bottom: 8px; width: 2px; background: var(--md-outline); }
+  .gen-node { position: relative; display: flex; align-items: center; gap: 4px; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background 0.15s; }
+  .gen-node:hover { background: rgba(0,0,0,0.05); }
+  [data-theme="dark"] .gen-node:hover { background: rgba(255,255,255,0.06); }
+  .gen-node::before { content: ''; position: absolute; left: -27px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; border-radius: 50%; background: var(--md-primary); border: 3px solid var(--md-surface); z-index: 1; }
+  [data-theme="dark"] .gen-node::before { background: var(--md-primary-light); }
+  .gen-node .gn-body { flex: 1; min-width: 0; }
+  .gen-node .gn-name { font-size: 14px; font-weight: 600; color: var(--md-on-surface); }
+  .gen-node .gn-age { font-size: 11px; color: var(--md-on-surface-variant); margin-top: 2px; }
+  .gen-node .material-icons-round.gn-chevron { font-size: 18px; color: var(--md-on-surface-variant); flex-shrink: 0; }
+  .gen-connector { position: relative; height: 22px; }
+  .gen-connector .material-icons-round { position: absolute; left: 12px; top: 3px; font-size: 16px; line-height: 1; color: var(--md-on-surface-variant); background: var(--md-surface); z-index: 1; }
 
   /* ========== MAPS ========== */
   .map-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
-  .map-svg-wrapper { width: 100%; height: 100%; overflow: auto; }
-  .map-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 30; }
+  #leaflet-map { width: 100%; height: 100%; background: #e8e6e0; }
+  .map-controls { position: absolute; top: 12px; right: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 500; }
   .map-btn { width: 40px; height: 40px; border-radius: 10px; background: var(--md-surface); border: 1px solid var(--md-outline); color: var(--md-on-surface); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 6px var(--md-shadow); transition: all 0.15s; }
   .map-btn:hover { background: var(--md-primary); color: #fff; }
-  .map-pin { cursor: pointer; transition: transform 0.15s; }
-  .map-pin:hover { transform: scale(1.3); }
-  .map-legend { position: absolute; bottom: 12px; left: 12px; background: var(--md-surface); border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 8px var(--md-shadow); border: 1px solid var(--md-outline); font-size: 12px; max-width: 200px; }
+  .map-legend { position: absolute; bottom: 12px; left: 12px; background: var(--md-surface); border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 8px var(--md-shadow); border: 1px solid var(--md-outline); font-size: 12px; max-width: 200px; max-height: 45%; overflow-y: auto; z-index: 500; }
   .map-legend-item { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; color: var(--md-on-surface); }
-  .map-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .map-legend-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 700; color: #fff; }
+  .map-intro { position: absolute; top: 12px; left: 12px; right: 60px; background: var(--md-surface); border-radius: 12px; padding: 10px 14px; box-shadow: 0 2px 8px var(--md-shadow); border: 1px solid var(--md-outline); font-size: 12px; color: var(--md-on-surface); line-height: 1.5; max-width: 360px; z-index: 500; }
+  .map-intro b { color: var(--md-primary); font-size: 13px; }
+  [data-theme="dark"] .map-intro b { color: var(--md-primary-light); }
   .map-tab-bar { display: flex; overflow-x: auto; gap: 6px; padding: 8px 12px; background: var(--md-surface); border-bottom: 1px solid var(--md-outline); -ms-overflow-style: none; scrollbar-width: none; }
   .map-tab-bar::-webkit-scrollbar { display: none; }
   .map-tab { padding: 6px 14px; border-radius: 20px; background: var(--md-surface-variant); border: 1px solid var(--md-outline); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: all 0.15s; color: var(--md-on-surface); }
   .map-tab.active { background: var(--md-primary); color: #fff; border-color: var(--md-primary); }
+  .map-pin-badge { color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.4); transition: transform 0.15s; }
+  .map-pin-badge:hover { transform: scale(1.2); z-index: 1000 !important; }
+  .leaflet-popup-content-wrapper { border-radius: 12px; }
+  .leaflet-popup-content b { color: var(--md-primary); }
 
   /* ========== AI CHAT ========== */
   .chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -252,7 +286,7 @@
   .info-card-title { font-size: 15px; font-weight: 700; color: var(--md-on-surface); margin-bottom: 8px; font-family: 'Crimson Pro', serif; }
   .info-row { display: flex; gap: 8px; margin-bottom: 6px; font-size: 13px; }
   .info-label { font-weight: 600; color: var(--md-on-surface-variant); min-width: 90px; flex-shrink: 0; }
-  .info-value { color: var(--md-on-surface); flex: 1; }
+  .info-value { color: var(--md-on-surface); flex: 1; min-width: 0; word-break: break-word; overflow-wrap: break-word; }
   .tag { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; background: rgba(26,35,126,0.1); color: var(--md-primary); margin: 2px; }
   [data-theme="dark"] .tag { background: rgba(159,168,218,0.12); color: var(--md-primary-light); }
   .era-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; background: rgba(184,134,11,0.12); color: var(--md-secondary); margin-bottom: 8px; }
@@ -325,16 +359,14 @@
     .fab { bottom: 20px; }
     .fab-ext { bottom: 20px; }
     .reader-content { padding: 28px 32px 80px; }
-    #right-panel.open { width: 340px; min-width: 340px; }
     .toast-container { bottom: 24px; }
   }
   @media (min-width: 1024px) {
     #sidebar { width: var(--sidebar-width); min-width: var(--sidebar-width); }
-    #right-panel.open { width: 380px; min-width: 380px; }
   }
-  @media (min-width: 768px) {
-    #top-bar .menu-toggle-sidebar { display: none; }
-  }
+  /* NOTE: menu-toggle-sidebar intentionally stays visible at all widths now —
+     the sidebar auto-closes after a chapter is picked (any screen size),
+     so this is the only way to reopen it on tablet/desktop. */
 
   /* ========== SWIPE TRANSITION ========== */
   .slide-in-right { animation: slideInRight 0.25s ease; }
@@ -382,6 +414,8 @@
   .empty-state .material-icons-round { font-size: 48px; opacity: 0.35; }
   .empty-state p { font-size: 14px; max-width: 220px; line-height: 1.5; }
 </style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
 
@@ -397,22 +431,21 @@
 <div class="toast-container" id="toast-container"></div>
 
 <!-- CONTEXT MENU -->
-<div id="context-menu" class="context-menu hidden" style="position:fixed;z-index:1000;">
-  <div class="context-menu-header" id="ctx-header">John 3:16</div>
-  <div class="context-colors">
-    <div class="color-chip y" onclick="applyHighlight('y')" title="Yellow"></div>
-    <div class="color-chip g" onclick="applyHighlight('g')" title="Green"></div>
-    <div class="color-chip b" onclick="applyHighlight('b')" title="Blue"></div>
-    <div class="color-chip p" onclick="applyHighlight('p')" title="Purple"></div>
-    <div class="color-chip r" onclick="applyHighlight('r')" title="Red"></div>
-    <div class="color-chip x" onclick="applyHighlight(null)" title="Remove"></div>
-  </div>
-  <div class="context-actions">
-    <div class="context-action" onclick="bookmarkVerse()"><span class="material-icons-round">bookmark_add</span>Add Bookmark</div>
-    <div class="context-action" onclick="openNoteEditor()"><span class="material-icons-round">edit_note</span>Add Note</div>
-    <div class="context-action" onclick="copyVerse()"><span class="material-icons-round">content_copy</span>Copy Verse</div>
-    <div class="context-action" onclick="shareVerse()"><span class="material-icons-round">share</span>Share</div>
-    <div class="context-action" onclick="closeContextMenu()"><span class="material-icons-round">close</span>Close</div>
+<div id="context-menu" class="context-menu hidden">
+  <div class="context-row">
+    <div class="color-chip y" onclick="applyHighlight('y')" title="Yellow" aria-label="Highlight yellow"></div>
+    <div class="color-chip g" onclick="applyHighlight('g')" title="Green" aria-label="Highlight green"></div>
+    <div class="color-chip b" onclick="applyHighlight('b')" title="Blue" aria-label="Highlight blue"></div>
+    <div class="color-chip p" onclick="applyHighlight('p')" title="Purple" aria-label="Highlight purple"></div>
+    <div class="color-chip r" onclick="applyHighlight('r')" title="Red" aria-label="Highlight red"></div>
+    <div class="color-chip x" onclick="applyHighlight(null)" title="Remove highlight" aria-label="Remove highlight"></div>
+    <div class="context-divider"></div>
+    <button class="context-icon-btn" onclick="bookmarkVerse()" title="Add Bookmark" aria-label="Add Bookmark"><span class="material-icons-round">bookmark_add</span></button>
+    <button class="context-icon-btn" onclick="openNoteEditor()" title="Add Note" aria-label="Add Note"><span class="material-icons-round">edit_note</span></button>
+    <button class="context-icon-btn" onclick="copyVerse()" title="Copy Verse" aria-label="Copy Verse"><span class="material-icons-round">content_copy</span></button>
+    <button class="context-icon-btn" onclick="shareVerse()" title="Share" aria-label="Share"><span class="material-icons-round">share</span></button>
+    <div class="context-divider"></div>
+    <button class="context-icon-btn" onclick="closeContextMenu()" title="Close" aria-label="Close"><span class="material-icons-round">close</span></button>
   </div>
 </div>
 
@@ -431,7 +464,7 @@
     <button class="icon-btn" onclick="openSearchModal()" aria-label="Search">
       <span class="material-icons-round">search</span>
     </button>
-    <button class="icon-btn" onclick="toggleRightPanel()" aria-label="Commentary" id="commentary-toggle">
+    <button class="icon-btn" onclick="openCommentaryPanel()" aria-label="Commentary" id="commentary-toggle">
       <span class="material-icons-round">chrome_reader_mode</span>
     </button>
     <button class="icon-btn" onclick="toggleTheme()" aria-label="Toggle theme" id="theme-btn">
@@ -444,6 +477,8 @@
 
   <!-- MAIN LAYOUT -->
   <div id="main-layout">
+    <!-- Backdrop shown behind the sidebar overlay; tap to close -->
+    <div id="sidebar-backdrop" onclick="toggleSidebar(false)"></div>
     <!-- LEFT SIDEBAR: Book Navigator -->
     <div id="sidebar">
       <div class="sidebar-inner">
@@ -533,24 +568,6 @@
         </div>
         <div id="notes-content" class="flex-1 overflow-y-auto scrollable"></div>
       </div>
-    </div>
-
-    <!-- RIGHT PANEL: Commentary -->
-    <div id="right-panel">
-      <div style="display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--md-outline);background:var(--md-surface);gap:8px;">
-        <span class="material-icons-round" style="color:var(--md-secondary);">library_books</span>
-        <span style="font-size:14px;font-weight:700;color:var(--md-on-surface);">Commentary & Context</span>
-        <div class="spacer"></div>
-        <button class="icon-btn" onclick="toggleRightPanel()" style="color:var(--md-on-surface-variant);width:36px;height:36px;">
-          <span class="material-icons-round" style="font-size:20px;">close</span>
-        </button>
-      </div>
-      <div class="tab-bar" id="right-tabs">
-        <div class="tab-item active" onclick="switchRightTab('commentary',this)">Commentary</div>
-        <div class="tab-item" onclick="switchRightTab('context',this)">Context</div>
-        <div class="tab-item" onclick="switchRightTab('crossrefs',this)">Cross-Refs</div>
-      </div>
-      <div id="right-panel-content" class="flex-1 scrollable"></div>
     </div>
   </div>
 
@@ -944,11 +961,11 @@ const BIBLE_CHARACTERS = [
   {id:'david',name:'David',emoji:'👑',born:'~1040 BC',died:'~970 BC',age:70,era:'Monarchy',role:'King, psalmist, ancestor of Christ',ref:'1 Sam 16 – 1 Ki 2; Psa 1-72',spouse:'Michal, Abigail, Bathsheba, others',children:['Absalom','Solomon','others'],desc:"Youngest son of Jesse, anointed king as a boy, defeated Goliath, united Israel's tribes, established Jerusalem as capital. Author of many Psalms. A 'man after God's own heart' despite serious failures. The Davidic Covenant promises an eternal throne.",gender:'M'},
   {id:'solomon',name:'Solomon',emoji:'💎',born:'~990 BC',died:'~931 BC',age:60,era:'Monarchy (Golden Age)',role:'Wisest king, Temple builder',ref:'1 Ki 1-11; Pro 1-29; Ecc; Sng',parent:'David & Bathsheba',desc:"Given wisdom beyond all others by God. Built the first Temple in Jerusalem. Author of Proverbs, Ecclesiastes, Song of Solomon. His unfaithfulness in old age (1,000 wives and concubines) led to the kingdom's division.",gender:'M'},
   {id:'elijah',name:'Elijah',emoji:'🔥',born:'~900 BC',died:'Never died',age:null,era:'Divided Monarchy',role:'Prophet of fire, type of John the Baptist',ref:'1 Ki 17-2 Ki 2; Mal 4:5-6',desc:"Greatest prophet of the northern kingdom, confronted Ahab and Jezebel. Called down fire on Mt. Carmel, fled to Horeb. Like Enoch, was taken to heaven alive in a whirlwind. Appears at the Transfiguration.",gender:'M'},
-  {id:'jeremiah',name:'Jeremiah',emoji:'😢',born:'~650 BC',died:'~570 BC',age:~80,era:'Late Monarchy / Exile',role:'Weeping prophet, new covenant announcer',ref:'Jer 1-52; Lam',desc:"Called from birth, forbidden to marry. Preached unpopular warnings of Babylonian judgment for 40+ years, mostly ignored. Announced the New Covenant (Jer 31:31-34). Witnessed Jerusalem's destruction and the exile.",gender:'M'},
-  {id:'daniel',name:'Daniel',emoji:'🦁',born:'~620 BC',died:'~535 BC',age:~85,era:'Exile (Babylon)',role:'Statesman-prophet, interpreter of dreams',ref:'Dan 1-12; Ezk 14:14',desc:"Taken to Babylon as a teenager, remained faithful through the lion's den and political pressure. Received apocalyptic visions of coming kingdoms and the coming of the Son of Man (Dan 7).",gender:'M'},
+  {id:'jeremiah',name:'Jeremiah',emoji:'😢',born:'~650 BC',died:'~570 BC',age:80,era:'Late Monarchy / Exile',role:'Weeping prophet, new covenant announcer',ref:'Jer 1-52; Lam',desc:"Called from birth, forbidden to marry. Preached unpopular warnings of Babylonian judgment for 40+ years, mostly ignored. Announced the New Covenant (Jer 31:31-34). Witnessed Jerusalem's destruction and the exile.",gender:'M'},
+  {id:'daniel',name:'Daniel',emoji:'🦁',born:'~620 BC',died:'~535 BC',age:85,era:'Exile (Babylon)',role:'Statesman-prophet, interpreter of dreams',ref:'Dan 1-12; Ezk 14:14',desc:"Taken to Babylon as a teenager, remained faithful through the lion's den and political pressure. Received apocalyptic visions of coming kingdoms and the coming of the Son of Man (Dan 7).",gender:'M'},
   {id:'mary',name:'Mary',emoji:'🌺',born:'~20 BC',died:'~54 AD',age:null,era:'Intertestamental / Apostolic',role:'Mother of Jesus, Theotokos',ref:'Luke 1-2; Jhn 2; Acts 1:14',spouse:'Joseph (betrothed)',children:['Jesus (divine), James, Joses, Judas, Simon, sisters'],desc:"Young virgin of Nazareth chosen to bear the Son of God. Her Magnificat (Luke 1:46-55) is one of Scripture's greatest hymns. Present at the crucifixion and in the Upper Room at Pentecost.",gender:'F'},
   {id:'jesus',name:'Jesus Christ',emoji:'✝️',born:'~4 BC (Bethlehem)',died:'~30 AD (Jerusalem)',age:33,era:'Apostolic / Fulfillment',role:'Son of God, Savior, Lord',ref:'All 4 Gospels; entire NT',parent:'Virgin Mary; legally Joseph',desc:"The eternal Son of God incarnate, born of a virgin, lived a sinless life, crucified for human sin, bodily resurrected on the third day, ascended to the Father's right hand. The central figure of all Scripture — both Testaments point to him.",gender:'M'},
-  {id:'paul',name:'Paul (Saul of Tarsus)',emoji:'📜',born:'~5 AD',died:'~67 AD',age:~62,era:'Apostolic',role:'Apostle to the Gentiles, theologian',ref:'Acts 9; 13 Epistles',desc:"Pharisee who persecuted Christians until his dramatic conversion on the Damascus road. Became the greatest missionary of the early church, authored 13 New Testament letters, and was martyred in Rome under Nero.",gender:'M'}
+  {id:'paul',name:'Paul (Saul of Tarsus)',emoji:'📜',born:'~5 AD',died:'~67 AD',age:62,era:'Apostolic',role:'Apostle to the Gentiles, theologian',ref:'Acts 9; 13 Epistles',desc:"Pharisee who persecuted Christians until his dramatic conversion on the Damascus road. Became the greatest missionary of the early church, authored 13 New Testament letters, and was martyred in Rome under Nero.",gender:'M'}
 ];
 
 const BIBLICAL_ERAS = [
@@ -971,19 +988,19 @@ const BIBLICAL_ERAS = [
 
 const GENEALOGY_TREE = [
   {era:'Ante-Diluvian Patriarchs (Adam to Noah)',people:[
-    {name:'Adam',age:930,note:'First man'},
-    {name:'Seth',age:912,note:'Son of Adam'},
+    {name:'Adam',age:930,note:'First man',charId:'adam'},
+    {name:'Seth',age:912,note:'Son of Adam',charId:'seth'},
     {name:'Enosh',age:905,note:'Son of Seth'},
     {name:'Kenan',age:910,note:'Son of Enosh'},
     {name:'Mahalalel',age:895,note:'Son of Kenan'},
     {name:'Jared',age:962,note:'Son of Mahalalel'},
-    {name:'Enoch',age:365,note:'Taken by God — never died'},
-    {name:'Methuselah',age:969,note:'Oldest man — died year of Flood'},
+    {name:'Enoch',age:365,note:'Taken by God — never died',charId:'enoch'},
+    {name:'Methuselah',age:969,note:'Oldest man — died year of Flood',charId:'methuselah'},
     {name:'Lamech',age:777,note:'Son of Methuselah'},
-    {name:'Noah',age:950,note:'Built the Ark'},
+    {name:'Noah',age:950,note:'Built the Ark',charId:'noah'},
   ]},
   {era:'Post-Flood to Abraham (Shem Line)',people:[
-    {name:'Shem',age:600,note:'Son of Noah'},
+    {name:'Shem',age:600,note:'Son of Noah',charId:'shem'},
     {name:'Arphaxad',age:438,note:'Son of Shem'},
     {name:'Shelah',age:433,note:'Son of Arphaxad'},
     {name:'Eber',age:464,note:'Son of Shelah'},
@@ -994,9 +1011,9 @@ const GENEALOGY_TREE = [
     {name:'Terah',age:205,note:'Father of Abraham'},
   ]},
   {era:'Patriarchs (Abraham to Joseph)',people:[
-    {name:'Abraham',age:175,note:'Father of faith; covenant'},
-    {name:'Isaac',age:180,note:'Child of promise'},
-    {name:'Jacob',age:147,note:'Renamed Israel; 12 sons'},
+    {name:'Abraham',age:175,note:'Father of faith; covenant',charId:'abraham'},
+    {name:'Isaac',age:180,note:'Child of promise',charId:'isaac'},
+    {name:'Jacob',age:147,note:'Renamed Israel; 12 sons',charId:'jacob'},
     {name:'Judah',age:null,note:'Royal tribe; Messianic line'},
     {name:'Perez',age:null,note:'Son of Judah'},
     {name:'Hezron',age:null,note:'Son of Perez'},
@@ -1007,10 +1024,10 @@ const GENEALOGY_TREE = [
     {name:'Boaz',age:null,note:'Married Ruth; kinsman-redeemer'},
     {name:'Obed',age:null,note:'Son of Boaz and Ruth'},
     {name:'Jesse',age:null,note:'Father of David'},
-    {name:'David',age:70,note:'King; Messianic covenant'},
+    {name:'David',age:70,note:'King; Messianic covenant',charId:'david'},
   ]},
   {era:'Royal Line: David to Christ (Matthew 1)',people:[
-    {name:'Solomon',age:60,note:'David\'s son; Temple builder'},
+    {name:'Solomon',age:60,note:'David\'s son; Temple builder',charId:'solomon'},
     {name:'Rehoboam',age:58,note:'Kingdom splits'},
     {name:'Abijah',age:null,note:'Son of Rehoboam'},
     {name:'Asa',age:null,note:'Son of Abijah; godly king'},
@@ -1026,8 +1043,8 @@ const GENEALOGY_TREE = [
     {name:'Shealtiel',age:null,note:'Post-exile'},
     {name:'Zerubbabel',age:null,note:'Led first return from exile'},
     {name:'Abiud → Eliakim → Azor → Zadok → Akim → Eliud → Eleazar → Matthan → Jacob',age:null,note:'Compressed Matthew 1 genealogy'},
-    {name:'Joseph',age:null,note:'Legal father of Jesus (Mary\'s husband)'},
-    {name:'JESUS CHRIST',age:33,note:'Son of God; fulfillment of all covenants'},
+    {name:'Joseph',age:null,note:'Legal father of Jesus (Mary\'s husband) — not to be confused with Jacob\'s son Joseph of Genesis'},
+    {name:'JESUS CHRIST',age:33,note:'Son of God; fulfillment of all covenants',charId:'jesus'},
   ]}
 ];
 
@@ -1039,39 +1056,65 @@ const BIBLE_MAPS = {
     title:"Abraham's Journey (~2000 BC)",
     description:"From Ur of the Chaldees through Haran to Canaan",
     pins:[
-      {id:'ur',x:72,y:62,name:"Ur of the Chaldees",color:"#1a237e",desc:"Abraham's birthplace. Modern-day southern Iraq (Tell el-Muqayyar). A major Sumerian city-state with a famous ziggurat dedicated to the moon god Nanna. Abraham called out of this pagan context by God.",verses:["Gen 11:31","Gen 15:7"]},
-      {id:'haran',x:55,y:45,name:"Haran",color:"#1a237e",desc:"Terah died here at 205 years old. Abraham stayed until called to leave at age 75. Located in modern southern Turkey near the Syrian border.",verses:["Gen 11:32","Gen 12:1-4"]},
-      {id:'shechem',x:42,y:52,name:"Shechem",color:"#388e3c",desc:"First stop in Canaan. Here God appeared and promised, 'To your offspring I will give this land.' Abraham built his first altar in the Promised Land.",verses:["Gen 12:6-7"]},
-      {id:'bethel',x:43,y:55,name:"Bethel/Ai",color:"#388e3c",desc:"Abraham pitched his tent between Bethel and Ai, built a second altar, and called on the name of the LORD.",verses:["Gen 12:8"]},
-      {id:'egypt',x:30,y:65,name:"Egypt",color:"#f57f17",desc:"Abraham went to Egypt during a famine, where he compromised by claiming Sarah was his sister. Pharaoh was plagued and returned Sarah.",verses:["Gen 12:10-20"]},
-      {id:'hebron',x:43,y:58,name:"Hebron (Mamre)",color:"#e65100",desc:"Abraham's main residence in Canaan. Here he received God's covenant, the three visitors announced Isaac's birth, and Abraham interceded for Sodom. The cave of Machpelah (family tomb) is here.",verses:["Gen 13:18","Gen 18:1","Gen 23:19"]},
-      {id:'moriah',x:44,y:56,name:"Mt. Moriah",color:"#b71c1c",desc:"Site of the near-sacrifice of Isaac. Later becomes Jerusalem, where Solomon's Temple was built on this exact mountain. God provided the ram — 'The LORD will provide.'",verses:["Gen 22:1-14","2Ch 3:1"]},
+      {id:'ur',lat:30.9626,lng:46.1025,name:"Ur of the Chaldees",color:"#1a237e",desc:"Abraham's birthplace. Modern-day southern Iraq (Tell el-Muqayyar). A major Sumerian city-state with a famous ziggurat dedicated to the moon god Nanna. Abraham called out of this pagan context by God.",verses:["Gen 11:31","Gen 15:7"]},
+      {id:'haran',lat:36.8667,lng:39.0333,name:"Haran",color:"#1a237e",desc:"Terah died here at 205 years old. Abraham stayed until called to leave at age 75. Located in modern southern Turkey near the Syrian border.",verses:["Gen 11:32","Gen 12:1-4"]},
+      {id:'shechem',lat:32.2137,lng:35.2802,name:"Shechem",color:"#388e3c",desc:"First stop in Canaan. Here God appeared and promised, 'To your offspring I will give this land.' Abraham built his first altar in the Promised Land.",verses:["Gen 12:6-7"]},
+      {id:'bethel',lat:31.9307,lng:35.2377,name:"Bethel/Ai",color:"#388e3c",desc:"Abraham pitched his tent between Bethel and Ai, built a second altar, and called on the name of the LORD.",verses:["Gen 12:8"]},
+      {id:'egypt',lat:30.8044,lng:31.8329,name:"Egypt (Nile Delta)",color:"#f57f17",desc:"Abraham went to Egypt during a famine, where he compromised by claiming Sarah was his sister. Pharaoh was plagued and returned Sarah.",verses:["Gen 12:10-20"]},
+      {id:'hebron',lat:31.5326,lng:35.0998,name:"Hebron (Mamre)",color:"#e65100",desc:"Abraham's main residence in Canaan. Here he received God's covenant, the three visitors announced Isaac's birth, and Abraham interceded for Sodom. The cave of Machpelah (family tomb) is here.",verses:["Gen 13:18","Gen 18:1","Gen 23:19"]},
+      {id:'moriah',lat:31.7784,lng:35.2354,name:"Mt. Moriah",color:"#b71c1c",desc:"Site of the near-sacrifice of Isaac. Later becomes Jerusalem, where Solomon's Temple was built on this exact mountain. God provided the ram — 'The LORD will provide.'",verses:["Gen 22:1-14","2Ch 3:1"]},
     ]
   },
   exodus:{
     title:"The Exodus Route (~1446 BC)",
     description:"Israel's journey from Egypt to Canaan through the wilderness",
     pins:[
-      {id:'rameses',x:32,y:63,name:"Rameses (Goshen)",color:"#b71c1c",desc:"The starting point of the Exodus — the land of Goshen where Israel had lived for ~430 years. The 10 plagues struck Egypt to secure their release.",verses:["Exo 12:37","Gen 47:11"]},
-      {id:'redsea',x:38,y:67,name:"Sea of Reeds (Red Sea)",color:"#0d47a1",desc:"God parted the waters, Israel crossed on dry ground, and Pharaoh's army was destroyed. The greatest act of redemption in the OT — a type of baptism (1 Cor 10:1-2).",verses:["Exo 14:21-31","1Co 10:1-2"]},
-      {id:'marah',x:39,y:68,name:"Marah",color:"#f57f17",desc:"Bitter water made sweet — God's first test of Israel's faith in the wilderness. God revealed himself as 'the LORD who heals you.'",verses:["Exo 15:22-26"]},
-      {id:'sinai',x:43,y:73,name:"Mt. Sinai (Horeb)",color:"#7b1fa2",desc:"God descended in fire on the mountain. Moses received the Ten Commandments and the entire Mosaic Law. Israel entered into covenant with God. Also where Elijah fled and heard God's still small voice.",verses:["Exo 19-20","1Ki 19:8-12"]},
-      {id:'kadesh',x:42,y:65,name:"Kadesh-Barnea",color:"#e65100",desc:"Israel's 12 spies sent from here; 10 gave a bad report. Because of unbelief, a whole generation was condemned to 40 years of wandering. Israel camped here for most of the 40 years.",verses:["Num 13-14","Deu 1:19-46"]},
-      {id:'nebo',x:48,y:58,name:"Mt. Nebo",color:"#388e3c",desc:"Moses's final resting place. He viewed the Promised Land from here but was not allowed to enter. Moses died at 120 years old — his eyes undimmed, his strength unabated.",verses:["Deu 34:1-12"]},
-      {id:'jordan',x:48,y:57,name:"Jordan River Crossing",color:"#1565c0",desc:"Joshua led Israel across the Jordan on dry ground (mirroring the Red Sea crossing). 12 stones set up as memorial. Israel entered the Promised Land.",verses:["Jos 3-4"]},
+      {id:'rameses',lat:30.8044,lng:31.8329,name:"Rameses (Goshen)",color:"#b71c1c",desc:"The starting point of the Exodus — the land of Goshen where Israel had lived for ~430 years. The 10 plagues struck Egypt to secure their release.",verses:["Exo 12:37","Gen 47:11"]},
+      {id:'redsea',lat:29.9668,lng:32.5498,name:"Sea of Reeds (Red Sea)",color:"#0d47a1",desc:"God parted the waters, Israel crossed on dry ground, and Pharaoh's army was destroyed. Traditional crossing site near the Gulf of Suez — exact location is debated. A type of baptism (1 Cor 10:1-2).",verses:["Exo 14:21-31","1Co 10:1-2"]},
+      {id:'marah',lat:29.1667,lng:32.7333,name:"Marah",color:"#f57f17",desc:"Bitter water made sweet — God's first test of Israel's faith in the wilderness (traditionally identified with Ain Hawarah). God revealed himself as 'the LORD who heals you.'",verses:["Exo 15:22-26"]},
+      {id:'sinai',lat:28.5394,lng:33.9754,name:"Mt. Sinai (Horeb)",color:"#7b1fa2",desc:"God descended in fire on the mountain (traditionally Jebel Musa in the southern Sinai). Moses received the Ten Commandments and the entire Mosaic Law. Also where Elijah fled and heard God's still small voice.",verses:["Exo 19-20","1Ki 19:8-12"]},
+      {id:'kadesh',lat:30.6481,lng:34.4228,name:"Kadesh-Barnea",color:"#e65100",desc:"Israel's 12 spies sent from here; 10 gave a bad report. Because of unbelief, a whole generation was condemned to 40 years of wandering. Israel camped here for most of the 40 years.",verses:["Num 13-14","Deu 1:19-46"]},
+      {id:'nebo',lat:31.7683,lng:35.7256,name:"Mt. Nebo",color:"#388e3c",desc:"Moses's final resting place. He viewed the Promised Land from here but was not allowed to enter. Moses died at 120 years old — his eyes undimmed, his strength unabated.",verses:["Deu 34:1-12"]},
+      {id:'jordan',lat:31.8383,lng:35.5392,name:"Jordan River Crossing",color:"#1565c0",desc:"Joshua led Israel across the Jordan on dry ground (mirroring the Red Sea crossing), traditionally at Qasr al-Yahud near Jericho. 12 stones set up as memorial.",verses:["Jos 3-4"]},
+    ]
+  },
+  conquest:{
+    title:"Conquest of Canaan (~1406–1400 BC)",
+    description:"Joshua leads Israel across the Jordan into the Promised Land, conquering it through a series of campaigns before it's divided among the twelve tribes.",
+    pins:[
+      {id:'jordancross2',lat:31.8383,lng:35.5392,name:"Jordan River Crossing",color:"#1565c0",desc:"Joshua led Israel across the Jordan on dry ground as priests carrying the Ark stood in the riverbed — a deliberate echo of the Red Sea crossing 40 years earlier. Twelve stones were set up as a memorial.",verses:["Jos 3:14-17","Jos 4:1-9"]},
+      {id:'jericho',lat:31.8706,lng:35.4444,name:"Jericho",color:"#b71c1c",desc:"The first Canaanite city to fall. Israel marched around its walls for seven days; on the seventh, the walls collapsed after a shout and trumpet blast. Rahab and her family were spared for hiding the spies.",verses:["Jos 6:1-27"]},
+      {id:'ai',lat:31.9275,lng:35.2814,name:"Ai",color:"#e65100",desc:"Israel's first defeat, caused by Achan's hidden sin — taking devoted plunder from Jericho. After Achan was dealt with, Joshua took the city using an ambush strategy.",verses:["Jos 7:1-26","Jos 8:1-29"]},
+      {id:'gibeon',lat:31.8494,lng:35.1808,name:"Gibeon",color:"#388e3c",desc:"The Gibeonites tricked Israel into a peace treaty by disguising themselves as distant travelers. When five Amorite kings attacked Gibeon for surrendering, Joshua defended it — and the sun 'stood still' during the battle.",verses:["Jos 9:3-27","Jos 10:1-14"]},
+      {id:'shechem2',lat:32.2137,lng:35.2802,name:"Shechem",color:"#1a237e",desc:"After the conquest, Joshua gathered Israel here to renew the covenant, reading the Law's blessings and curses from Mt. Gerizim and Mt. Ebal — the very place God first promised this land to Abraham.",verses:["Jos 8:30-35","Jos 24:1-28"]},
+      {id:'hazor',lat:33.0201,lng:35.5661,name:"Hazor",color:"#7b1fa2",desc:"The largest, most powerful city in northern Canaan, head of a coalition of kings. Joshua defeated the coalition and burned Hazor — the only city of the northern campaign he burned.",verses:["Jos 11:1-15"]},
+      {id:'shiloh',lat:32.0558,lng:35.2843,name:"Shiloh",color:"#f57f17",desc:"Once the land was largely subdued, the Tabernacle was set up here and it became Israel's central place of worship for over 300 years, until the Ark's capture in Eli's time. Remaining land was divided by lot from here.",verses:["Jos 18:1","Jos 19:51"]},
+    ]
+  },
+  jesus:{
+    title:"Life & Ministry of Jesus (~5 BC – 30 AD)",
+    description:"From His birth in Bethlehem to His crucifixion and resurrection in Jerusalem, tracing the key locations of Christ's earthly life and three-year public ministry.",
+    pins:[
+      {id:'bethlehem',lat:31.7054,lng:35.2024,name:"Bethlehem",color:"#b71c1c",desc:"Jesus's birthplace, fulfilling Micah's 700-year-old prophecy that the Messiah would come from this small town of Judah. Shepherds, then later the Magi, came to worship the newborn King.",verses:["Mat 2:1-12","Luk 2:1-20","Mic 5:2"]},
+      {id:'nazareth',lat:32.6996,lng:35.2967,name:"Nazareth",color:"#388e3c",desc:"The Galilean hill town where Jesus grew up after His family returned from Egypt. He was rejected here early in His ministry after reading from Isaiah in the synagogue and claiming it was fulfilled.",verses:["Luk 2:39-40","Luk 4:16-30"]},
+      {id:'capernaum',lat:32.8797,lng:35.5764,name:"Capernaum",color:"#1a237e",desc:"Jesus made this fishing town on the Sea of Galilee His ministry headquarters after leaving Nazareth. Peter's home was here; many miracles happened here, including healing the centurion's servant and a paralytic lowered through the roof.",verses:["Mat 4:13","Mar 2:1-12","Mat 8:5-13"]},
+      {id:'jordanbaptism',lat:31.8383,lng:35.5392,name:"Jordan River",color:"#0d47a1",desc:"John the Baptist baptized Jesus here (traditionally Qasr al-Yahud, near Jericho), and the Spirit descended like a dove as the Father's voice declared, 'This is my beloved Son.'",verses:["Mat 3:13-17"]},
+      {id:'jerusalem2',lat:31.7784,lng:35.2354,name:"Jerusalem",color:"#c62828",desc:"The center of Jesus's climactic final week — the Triumphal Entry, cleansing the Temple, and the Last Supper. The city He wept over, longing to gather her people 'as a hen gathers her chicks.'",verses:["Mat 21:1-11","Luk 19:41-44","Mat 26:17-30"]},
+      {id:'olivet',lat:31.7784,lng:35.2436,name:"Mount of Olives",color:"#7b1fa2",desc:"Overlooking Jerusalem, this is where Jesus delivered the Olivet Discourse on the end times, agonized in prayer at Gethsemane the night of His arrest, and ascended to heaven 40 days after His resurrection.",verses:["Mat 24:3","Mat 26:36-46","Act 1:9-12"]},
+      {id:'golgotha',lat:31.7784,lng:35.2297,name:"Golgotha (Calvary)",color:"#212121",desc:"'The Place of the Skull,' just outside Jerusalem's walls, traditionally the site of the Church of the Holy Sepulchre. Jesus was crucified here between two criminals, buried nearby, and rose on the third day, exactly as He had said.",verses:["Mat 27:33-56","Luk 24:1-8"]},
     ]
   },
   paul:{
     title:"Paul's Missionary Journeys (~46–57 AD)",
     description:"Three apostolic journeys that planted churches across the Roman Empire",
     pins:[
-      {id:'antioch',x:55,y:48,name:"Antioch (Syria)",color:"#1a237e",desc:"Home base for all three of Paul's missionary journeys. First place believers were called 'Christians' (Acts 11:26). Major Gentile church planting center.",verses:["Acts 11:26","Acts 13:1-3"]},
-      {id:'ephesus',x:47,y:50,name:"Ephesus",color:"#7b1fa2",desc:"Paul's longest stay (3 years) during 3rd journey. Major commercial city, center of Artemis worship. Paul wrote 1 Corinthians from here. A riot erupted over his preaching affecting idol sales.",verses:["Acts 19","Eph 1:1"]},
-      {id:'corinth',x:48,y:54,name:"Corinth",color:"#e65100",desc:"Paul stayed 18 months on his 2nd journey, planting the church. A cosmopolitan port city famous for immorality. He wrote Romans from here, and 1-2 Corinthians TO here.",verses:["Acts 18:1-18","1Co 1:2"]},
-      {id:'philippi',x:50,y:51,name:"Philippi",color:"#388e3c",desc:"Paul's first European church (2nd journey). Lydia was the first convert. Paul and Silas were imprisoned and miraculously freed by an earthquake, leading to the jailer's conversion.",verses:["Acts 16:11-40","Php 1:1"]},
-      {id:'athens',x:48,y:54,name:"Athens",color:"#f57f17",desc:"Paul preached on the Areopagus (Mars Hill), engaging Greek philosophers with the 'unknown God.' Some believed, including Dionysius the Areopagite.",verses:["Acts 17:16-34"]},
-      {id:'rome',x:35,y:50,name:"Rome",color:"#b71c1c",desc:"Paul arrived as a prisoner (~60 AD), spent 2 years under house arrest preaching freely. He wrote Prison Epistles (Eph, Php, Col, Phm) from here. Tradition holds he was martyred here under Nero (~67 AD).",verses:["Acts 28:14-31","Rom 1:7","Php 4:22"]},
-      {id:'jerusalem',x:53,y:58,name:"Jerusalem",color:"#c62828",desc:"Paul returned to Jerusalem at end of 3rd journey, was arrested in the Temple. His arrest initiated the events leading to his appeal to Caesar and journey to Rome.",verses:["Acts 21:17-23:11"]},
+      {id:'antioch',lat:36.2023,lng:36.1613,name:"Antioch (Syria)",color:"#1a237e",desc:"Home base for all three of Paul's missionary journeys. First place believers were called 'Christians' (Acts 11:26). Major Gentile church planting center.",verses:["Acts 11:26","Acts 13:1-3"]},
+      {id:'ephesus',lat:37.9495,lng:27.3639,name:"Ephesus",color:"#7b1fa2",desc:"Paul's longest stay (3 years) during 3rd journey. Major commercial city, center of Artemis worship. Paul wrote 1 Corinthians from here. A riot erupted over his preaching affecting idol sales.",verses:["Acts 19","Eph 1:1"]},
+      {id:'corinth',lat:37.9058,lng:22.8781,name:"Corinth",color:"#e65100",desc:"Paul stayed 18 months on his 2nd journey, planting the church. A cosmopolitan port city famous for immorality. He wrote Romans from here, and 1-2 Corinthians TO here.",verses:["Acts 18:1-18","1Co 1:2"]},
+      {id:'philippi',lat:41.0138,lng:24.2870,name:"Philippi",color:"#388e3c",desc:"Paul's first European church (2nd journey). Lydia was the first convert. Paul and Silas were imprisoned and miraculously freed by an earthquake, leading to the jailer's conversion.",verses:["Acts 16:11-40","Php 1:1"]},
+      {id:'athens',lat:37.9838,lng:23.7275,name:"Athens",color:"#f57f17",desc:"Paul preached on the Areopagus (Mars Hill), engaging Greek philosophers with the 'unknown God.' Some believed, including Dionysius the Areopagite.",verses:["Acts 17:16-34"]},
+      {id:'rome',lat:41.9028,lng:12.4964,name:"Rome",color:"#b71c1c",desc:"Paul arrived as a prisoner (~60 AD), spent 2 years under house arrest preaching freely. He wrote Prison Epistles (Eph, Php, Col, Phm) from here. Tradition holds he was martyred here under Nero (~67 AD).",verses:["Acts 28:14-31","Rom 1:7","Php 4:22"]},
+      {id:'jerusalem',lat:31.7784,lng:35.2354,name:"Jerusalem",color:"#c62828",desc:"Paul returned to Jerusalem at end of 3rd journey, was arrested in the Temple. His arrest initiated the events leading to his appeal to Caesar and journey to Rome.",verses:["Acts 21:17-23:11"]},
     ]
   }
 };
@@ -1084,8 +1127,8 @@ let APP_STATE = {
   currentChapter: 1,
   currentVerse: null,
   activeTab: 'reader',
-  sidebarOpen: window.innerWidth >= 768,
-  rightPanelOpen: window.innerWidth >= 1024,
+  sidebarOpen: false,
+  rightPanelOpen: false,
   darkMode: false,
   fontSize: 17,
   fontFamily: 'serif',
@@ -1151,22 +1194,36 @@ function dbPut(storeName, data) {
 }
 
 async function fetchAndCacheBook(bookId) {
-  // Try IndexedDB cache first
+  // Try IndexedDB cache first (fastest — local disk, no network)
   const cached = await dbGet('bibleText', bookId);
   if (cached && cached.data) {
     APP_STATE.bibleData[bookId] = cached.data;
     return cached.data;
   }
 
-  // Try fetching from public KJV CDN (graceful fallback to seed data)
   const bookMeta = BIBLE_BOOKS.find(b => b.id === bookId);
   if (!bookMeta) return null;
+
+  // Try Firestore next — shared cache across devices/sessions, so if
+  // anyone has ever loaded this book before, everyone gets it instantly
+  // instead of re-fetching chapter-by-chapter from the ESV API.
+  try {
+    const fromCloud = await loadBookFromFirestore(bookId);
+    if (fromCloud) {
+      APP_STATE.bibleData[bookId] = fromCloud;
+      await dbPut('bibleText', {id: bookId, data: fromCloud, fetched: Date.now()});
+      return fromCloud;
+    }
+  } catch(e) {
+    console.warn(`Firestore cache lookup failed for ${bookMeta.name}:`, e);
+  }
 
   // Try ESV API first
   try {
     const converted = await fetchESVBook(bookMeta);
     APP_STATE.bibleData[bookId] = converted;
     await dbPut('bibleText', {id: bookId, data: converted, fetched: Date.now()});
+    saveBookToFirestore(bookId, converted); // fire-and-forget, don't block the reader
     return converted;
   } catch(e) {
     console.warn(`ESV API fetch failed for ${bookMeta.name}, falling back to KJV:`, e);
@@ -1219,6 +1276,10 @@ async function initApp() {
   updateLoadingBar(10, "Opening database...");
   await initDB();
 
+  // Kick off Firebase SDK load early (non-blocking) so Firestore is likely
+  // ready by the time fetchAndCacheBook needs it below.
+  initFirebase();
+
   updateLoadingBar(25, "Loading settings...");
   await loadSettings();
 
@@ -1248,18 +1309,11 @@ async function initApp() {
   // Init AI chat
   initAIChat();
 
-  // Load Firebase SDK (async, non-blocking)
-  initFirebase();
-
-  // Check if tablet to auto-show sidebar
-  if (window.innerWidth >= 768) {
-    document.getElementById('sidebar').classList.add('open');
-    APP_STATE.sidebarOpen = true;
-  }
-  if (window.innerWidth >= 1024) {
-    document.getElementById('right-panel').classList.add('open');
-    APP_STATE.rightPanelOpen = true;
-  }
+  // Sidebar is now an overlay drawer (see below), so it stays closed by
+  // default at every width — auto-opening it would dim the reading area
+  // behind a backdrop on load, which isn't what we want. Commentary &
+  // Context is now a modal too, so it likewise stays closed until the
+  // user taps the commentary icon.
 
   // Touch swipe support
   setupSwipeGestures();
@@ -1307,39 +1361,50 @@ function buildBookList() {
   const OT = BIBLE_BOOKS.filter(b => b.testament === 'OT');
   const NT = BIBLE_BOOKS.filter(b => b.testament === 'NT');
 
-  let html = '<div class="testament-label">Old Testament</div>';
-  OT.forEach(book => {
-    html += `<div class="book-item${book.id === APP_STATE.currentBook ? ' active' : ''}" data-book="${book.id}" onclick="selectBook('${book.id}')">
-      <span class="book-abbr">${book.abbr}</span>
-      <span>${book.name}</span>
+  const renderBook = (book) => {
+    const isActive = book.id === APP_STATE.currentBook;
+    return `<div class="book-group" data-book="${book.id}">
+      <div class="book-item${isActive ? ' active' : ''}" data-book="${book.id}" onclick="selectBook('${book.id}')">
+        <span class="book-abbr">${book.abbr}</span>
+        <span class="book-name">${book.name}</span>
+      </div>
     </div>`;
-  });
-  html += '<div class="testament-label">New Testament</div>';
-  NT.forEach(book => {
-    html += `<div class="book-item${book.id === APP_STATE.currentBook ? ' active' : ''}" data-book="${book.id}" onclick="selectBook('${book.id}')">
-      <span class="book-abbr">${book.abbr}</span>
-      <span>${book.name}</span>
-    </div>`;
-  });
-  container.innerHTML = html;
+  };
+
+  let otHtml = '<div class="testament-label">Old Testament</div>';
+  OT.forEach(book => otHtml += renderBook(book));
+  let ntHtml = '<div class="testament-label">New Testament</div>';
+  NT.forEach(book => ntHtml += renderBook(book));
+
+  container.innerHTML = `<div class="testament-columns">
+    <div class="testament-col">${otHtml}</div>
+    <div class="testament-col">${ntHtml}</div>
+  </div>`;
 }
 
 function filterBooks(query) {
-  const items = document.querySelectorAll('.book-item');
+  const groups = document.querySelectorAll('.book-group');
   const q = query.toLowerCase();
-  items.forEach(item => {
+  groups.forEach(group => {
+    const item = group.querySelector('.book-item');
     const name = item.textContent.toLowerCase();
-    item.style.display = name.includes(q) ? '' : 'none';
+    group.style.display = name.includes(q) ? '' : 'none';
   });
 }
 
+// Clicking a book loads chapter 1 immediately and closes the sidebar
+// right away (any screen size) — no intermediate chapter picker step.
 async function selectBook(bookId) {
   APP_STATE.currentBook = bookId;
   APP_STATE.currentChapter = 1;
   buildBookList();
   showToast(`Loading ${BIBLE_BOOKS.find(b => b.id === bookId).name}...`);
 
-  // Fetch the book
+  // Picking a book should always jump to the Reader — otherwise the
+  // book loads silently behind whatever tab (Genealogy, Notes, etc.)
+  // the user happened to be on.
+  switchTab('reader', document.getElementById('nav-reader'));
+
   await fetchAndCacheBook(bookId);
 
   updateChapterDisplay();
@@ -1347,10 +1412,7 @@ async function selectBook(bookId) {
   renderRightPanel();
   updateBookmarkBtn();
 
-  // On mobile, close sidebar after selection
-  if (window.innerWidth < 768) {
-    toggleSidebar(false);
-  }
+  toggleSidebar(false);
 }
 
 // ============================================================
@@ -1487,21 +1549,12 @@ function selectVerse(key, verseNum, event, isContext = false) {
   APP_STATE.selectedVerse = verseNum;
   APP_STATE.selectedVerseKey = key;
 
-  const parts = key.split('_');
-  const bookMeta = BIBLE_BOOKS.find(b => b.id === parts[0]);
-  document.getElementById('ctx-header').textContent = `${bookMeta?.name || ''} ${parts[1]}:${parts[2]}`;
-
-  // Show context menu
-  showContextMenu(event || {clientX: window.innerWidth/2, clientY: window.innerHeight/2});
+  // Show context menu (bottom sheet — no positioning needed, it's anchored via CSS)
+  showContextMenu();
 }
 
-function showContextMenu(event) {
-  const menu = document.getElementById('context-menu');
-  menu.classList.remove('hidden');
-  const x = Math.min(event.clientX, window.innerWidth - 250);
-  const y = Math.min(event.clientY, window.innerHeight - 250);
-  menu.style.left = x + 'px';
-  menu.style.top = y + 'px';
+function showContextMenu() {
+  document.getElementById('context-menu').classList.remove('hidden');
 }
 
 function closeContextMenu() {
@@ -1654,7 +1707,13 @@ function shareVerse() {
 // RIGHT PANEL
 // ============================================================
 function renderRightPanel() {
-  if (!APP_STATE.rightPanelOpen) return;
+  // Self-correcting: if the modal was dismissed (backdrop click, etc.)
+  // the #right-panel-content element won't exist anymore even if the
+  // state flag hasn't been explicitly cleared yet.
+  if (!APP_STATE.rightPanelOpen || !document.getElementById('right-panel-content')) {
+    APP_STATE.rightPanelOpen = false;
+    return;
+  }
   renderRightSubTab(APP_STATE.rightSubTab);
 }
 
@@ -1899,18 +1958,20 @@ function switchGenealogyTab(tab, el) {
 
   if (tab === 'tree') {
     let html = '<div class="gen-tree scrollable" style="overflow:auto;height:100%;">';
-    GENEALOGY_TREE.forEach(era => {
+    GENEALOGY_TREE.forEach((era, eraIdx) => {
       html += `<div class="gen-era">
         <div class="gen-era-title">${era.era}</div>
-        <div class="gen-row">`;
+        <div class="gen-lineage">`;
       era.people.forEach((p, i) => {
-        html += `<div class="gen-node" onclick="showCharacterDetail('${p.name}')">
-          <div class="gn-name">${p.name}</div>
-          ${p.age ? `<div class="gn-age">${p.age} yrs</div>` : ''}
-          ${p.note ? `<div class="gn-age" style="font-style:italic;">${p.note}</div>` : ''}
+        html += `<div class="gen-node" onclick="showTreeCharacterDetail(${eraIdx}, ${i})">
+          <div class="gn-body">
+            <div class="gn-name">${p.name}</div>
+            ${p.age ? `<div class="gn-age">${p.age} yrs${p.note ? ' · ' + p.note : ''}</div>` : (p.note ? `<div class="gn-age" style="font-style:italic;">${p.note}</div>` : '')}
+          </div>
+          <span class="material-icons-round gn-chevron">chevron_right</span>
         </div>`;
         if (i < era.people.length - 1) {
-          html += `<div style="display:flex;align-items:center;color:var(--md-on-surface-variant);font-size:20px;padding-top:8px;">→</div>`;
+          html += `<div class="gen-connector"><span class="material-icons-round">keyboard_arrow_down</span></div>`;
         }
       });
       html += '</div></div>';
@@ -1981,6 +2042,35 @@ function switchGenealogyTab(tab, el) {
   }
 }
 
+// Family Tree nodes: most don't have a full BIBLE_CHARACTERS profile, so
+// rather than silently doing nothing (or matching the wrong same-named
+// person, e.g. two different "Joseph"s), this always opens a modal —
+// a rich one when charId points to a real profile, otherwise a minimal
+// one built from whatever the tree itself knows (age/note/era).
+function showTreeCharacterDetail(eraIdx, personIdx) {
+  const era = GENEALOGY_TREE[eraIdx];
+  const p = era?.people?.[personIdx];
+  if (!p) return;
+
+  const char = p.charId ? BIBLE_CHARACTERS.find(c => c.id === p.charId) : null;
+  if (char) {
+    showCharacterDetail(char.name);
+    return;
+  }
+
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" style="font-family:'Crimson Pro',serif;font-size:22px;">${p.name}</div>
+    <div class="sheet-body" style="padding:0 16px 20px;">
+      <div class="era-badge"><span class="material-icons-round" style="font-size:14px;">history_edu</span>${era.era}</div>
+      <div class="info-card" style="margin:12px 0 0;">
+        ${p.age ? `<div class="info-row"><span class="info-label">Age</span><span class="info-value">${p.age} years</span></div>` : ''}
+        <div style="font-size:13px;color:var(--md-on-surface);line-height:1.6;${p.age ? 'margin-top:8px;' : ''}">${p.note || 'A detailed profile isn\'t available for this person yet.'}</div>
+      </div>
+    </div>
+  `, true);
+}
+
 function showCharacterDetail(name) {
   const char = BIBLE_CHARACTERS.find(c => c.name === name || name.includes(c.name.split('/')[0]));
   if (!char) { showToast('Character: ' + name); return; }
@@ -2006,6 +2096,11 @@ function showCharacterDetail(name) {
 // ============================================================
 // MAPS
 // ============================================================
+// Persistent Leaflet map instance — recreated once, then just updated
+// (markers/route/view) on every era switch instead of rebuilding tiles.
+let bibleMap = null;
+let bibleMapLayers = [];
+
 function buildMaps() {
   const tabBar = document.getElementById('map-tabs');
   tabBar.innerHTML = Object.entries(BIBLE_MAPS).map(([key, map]) =>
@@ -2025,82 +2120,73 @@ function renderMap() {
   const container = document.getElementById('map-content');
   const mapData = BIBLE_MAPS[APP_STATE.mapMode];
 
-  // SVG-based map with Middle East outline
-  const svg = `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;min-width:500px;min-height:400px;background:linear-gradient(180deg,#b3d4f5 0%,#c9e3f7 40%,#d4e6c3 60%,#e8d5a3 100%);">
-    <!-- Mediterranean Sea -->
-    <path d="M20,40 Q30,35 45,38 Q50,35 55,38 Q60,35 65,42 Q60,48 50,45 Q40,48 30,45 Z" fill="#4a90d9" opacity="0.6"/>
-    <text x="35" y="44" font-size="3" fill="#1a237e" font-style="italic">Mediterranean Sea</text>
+  // Build the shell once — Leaflet needs a stable div to attach to and
+  // shouldn't be torn down/rebuilt on every era switch (that would
+  // re-download all the map tiles each time).
+  if (!document.getElementById('leaflet-map')) {
+    container.innerHTML = `
+      <div class="map-container">
+        <div id="leaflet-map"></div>
+        <div class="map-intro" id="map-intro"></div>
+        <div class="map-controls">
+          <button class="map-btn" onclick="recenterMap()" title="Recenter"><span class="material-icons-round" style="font-size:18px;">center_focus_strong</span></button>
+        </div>
+        <div class="map-legend" id="map-legend"></div>
+      </div>`;
+  }
 
-    <!-- Red Sea -->
-    <path d="M42,68 L45,85 L47,85 L44,68 Z" fill="#4a90d9" opacity="0.5"/>
-    <text x="46" y="76" font-size="2.5" fill="#1a237e" font-style="italic" transform="rotate(15,46,76)">Red Sea</text>
+  document.getElementById('map-intro').innerHTML = `
+    <b>${mapData.title}</b>
+    <div style="margin-top:4px;">${mapData.description}</div>
+    <div style="margin-top:6px;font-size:11px;color:var(--md-on-surface-variant);">Numbers show the order of the journey — tap any stop for details.</div>`;
 
-    <!-- Persian Gulf -->
-    <path d="M68,60 Q72,58 75,62 Q73,65 70,65 Z" fill="#4a90d9" opacity="0.5"/>
+  document.getElementById('map-legend').innerHTML = `
+    <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--md-on-surface);">Stops</div>
+    ${mapData.pins.map((p, idx) => `<div class="map-legend-item" onclick="showMapPin('${p.id}')" style="cursor:pointer;"><div class="map-legend-dot" style="background:${p.color}">${idx + 1}</div>${p.name}</div>`).join('')}`;
 
-    <!-- Nile River -->
-    <path d="M33,65 Q31,60 30,55 Q31,50 32,45" stroke="#4a90d9" fill="none" stroke-width="0.8" opacity="0.8"/>
-    <text x="27" y="55" font-size="2.5" fill="#1565c0" transform="rotate(-30,27,55)">Nile</text>
+  if (!bibleMap) {
+    bibleMap = L.map('leaflet-map', { zoomControl: true, attributionControl: true });
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(bibleMap);
+  }
 
-    <!-- Jordan River area -->
-    <path d="M47,50 L48,57 L48,62" stroke="#4a90d9" fill="none" stroke-width="0.5" opacity="0.8"/>
+  // Clear the previous era's markers/route before drawing the new one
+  bibleMapLayers.forEach(layer => bibleMap.removeLayer(layer));
+  bibleMapLayers = [];
 
-    <!-- Euphrates River -->
-    <path d="M55,42 Q60,44 65,48 Q68,52 70,58" stroke="#4a90d9" fill="none" stroke-width="0.8" opacity="0.7"/>
-    <text x="61" y="47" font-size="2.5" fill="#1565c0" transform="rotate(30,61,47)">Euphrates</text>
+  const latlngs = mapData.pins.map(p => [p.lat, p.lng]);
 
-    <!-- Tigris -->
-    <path d="M60,42 Q64,46 66,52 Q68,56 70,62" stroke="#4a90d9" fill="none" stroke-width="0.6" opacity="0.7"/>
+  const route = L.polyline(latlngs, {
+    color: '#4a4a4a', weight: 2.5, dashArray: '6,8', opacity: 0.65
+  }).addTo(bibleMap);
+  bibleMapLayers.push(route);
 
-    <!-- Sinai Peninsula -->
-    <path d="M40,62 L44,70 L48,62 Z" fill="#d4a96a" opacity="0.6"/>
-    <text x="40" y="68" font-size="2.5" fill="#5d4037">Sinai</text>
+  mapData.pins.forEach((pin, idx) => {
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="map-pin-badge" style="background:${pin.color};width:28px;height:28px;border-radius:50%;font-size:13px;">${idx + 1}</div>`,
+      iconSize: [28, 28],
+      iconAnchor: [14, 14],
+    });
+    const marker = L.marker([pin.lat, pin.lng], {icon, title: pin.name}).addTo(bibleMap);
+    marker.bindTooltip(pin.name, {direction: 'top', offset: [0, -12]});
+    marker.on('click', () => showMapPin(pin.id));
+    bibleMapLayers.push(marker);
+  });
 
-    <!-- Canaan/Israel area -->
-    <rect x="44" y="50" width="8" height="12" rx="1" fill="#c8e6c9" opacity="0.5"/>
-    <text x="45" y="57" font-size="2.5" fill="#2e7d32">Canaan</text>
+  bibleMap.fitBounds(route.getBounds(), {padding: [50, 50]});
+  // Container may have just become visible (tab switch) — Leaflet needs
+  // a nudge to recompute its size correctly once layout settles.
+  setTimeout(() => { bibleMap.invalidateSize(); bibleMap.fitBounds(route.getBounds(), {padding: [50, 50]}); }, 150);
+}
 
-    <!-- Egypt -->
-    <rect x="28" y="60" width="15" height="12" rx="1" fill="#fff9c4" opacity="0.4"/>
-    <text x="30" y="67" font-size="3" fill="#f57f17">Egypt</text>
-
-    <!-- Babylon/Mesopotamia -->
-    <rect x="60" y="50" width="15" height="15" rx="1" fill="#fff8e1" opacity="0.4"/>
-    <text x="62" y="60" font-size="3" fill="#e65100">Mesopotamia</text>
-
-    <!-- Map Pins -->
-    ${mapData.pins.map(pin => `
-      <g class="map-pin" onclick="showMapPin('${pin.id}')" transform="translate(${pin.x},${pin.y})">
-        <circle r="3" fill="${pin.color}" opacity="0.9" stroke="white" stroke-width="0.8"/>
-        <circle r="1.2" fill="white"/>
-        <text x="4" y="-3" font-size="3" fill="${pin.color}" font-weight="bold" style="pointer-events:none;">${pin.name}</text>
-      </g>
-    `).join('')}
-
-    <!-- Compass Rose -->
-    <g transform="translate(88,88)">
-      <circle r="5" fill="rgba(255,255,255,0.8)" stroke="#999" stroke-width="0.5"/>
-      <text x="0" y="-2.5" text-anchor="middle" font-size="3" fill="#333" font-weight="bold">N</text>
-      <text x="0" y="5" text-anchor="middle" font-size="3" fill="#333">S</text>
-      <text x="-4" y="1.5" text-anchor="middle" font-size="3" fill="#333">W</text>
-      <text x="4" y="1.5" text-anchor="middle" font-size="3" fill="#333">E</text>
-      <line x1="0" y1="-4" x2="0" y2="4" stroke="#333" stroke-width="0.5"/>
-      <line x1="-4" y1="0" x2="4" y2="0" stroke="#333" stroke-width="0.5"/>
-    </g>
-  </svg>`;
-
-  container.innerHTML = `
-    <div class="map-container">
-      <div class="map-svg-wrapper">${svg}</div>
-      <div class="map-controls">
-        <button class="map-btn" onclick="showToast('Use scroll/pinch to zoom')" title="Zoom"><span class="material-icons-round" style="font-size:18px;">zoom_in</span></button>
-        <button class="map-btn" onclick="showMapInfo()" title="Info"><span class="material-icons-round" style="font-size:18px;">info</span></button>
-      </div>
-      <div class="map-legend">
-        <div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--md-on-surface);">${mapData.title}</div>
-        ${mapData.pins.map(p => `<div class="map-legend-item"><div class="map-legend-dot" style="background:${p.color}"></div>${p.name}</div>`).join('')}
-      </div>
-    </div>`;
+function recenterMap() {
+  if (!bibleMap) return;
+  const mapData = BIBLE_MAPS[APP_STATE.mapMode];
+  const latlngs = mapData.pins.map(p => [p.lat, p.lng]);
+  bibleMap.fitBounds(L.latLngBounds(latlngs), {padding: [50, 50]});
 }
 
 function showMapPin(pinId) {
@@ -2119,16 +2205,6 @@ function showMapPin(pinId) {
   `, true);
 }
 
-function showMapInfo() {
-  const mapData = BIBLE_MAPS[APP_STATE.mapMode];
-  showModal(`
-    <div class="sheet-handle"></div>
-    <div class="sheet-title">${mapData.title}</div>
-    <div class="sheet-body" style="padding:0 16px 20px;">
-      <div style="font-size:14px;color:var(--md-on-surface);line-height:1.7;">${mapData.description}</div>
-    </div>
-  `, true);
-}
 
 // ============================================================
 // AI CHAT
@@ -2584,6 +2660,33 @@ function initFirebase() {
   document.head.appendChild(script1);
 }
 
+// ------------------------------------------------------------
+// Bible text cache (Firestore) — shared across all devices/users so
+// a book only ever needs to be fetched from the ESV API once, total.
+// ------------------------------------------------------------
+async function loadBookFromFirestore(bookId) {
+  if (!firestoreDb) return null;
+  const doc = await firestoreDb.collection('bibleCache').doc(bookId).get();
+  if (!doc.exists) return null;
+  const data = doc.data();
+  return data?.chapters || null;
+}
+
+async function saveBookToFirestore(bookId, converted) {
+  if (!firestoreDb) return;
+  try {
+    await firestoreDb.collection('bibleCache').doc(bookId).set({
+      chapters: converted,
+      source: 'esv',
+      cachedAt: Date.now(),
+    });
+  } catch (e) {
+    // Non-critical — the book still loaded fine from the API and is
+    // cached locally in IndexedDB either way.
+    console.warn(`Could not save ${bookId} to Firestore cache:`, e);
+  }
+}
+
 async function syncToFirestore(userId) {
   if (!firestoreDb) return;
   try {
@@ -2691,19 +2794,51 @@ function switchTab(tab, el) {
 
 function toggleSidebar(force) {
   const sidebar = document.getElementById('sidebar');
+  const backdrop = document.getElementById('sidebar-backdrop');
   if (typeof force === 'boolean') {
     APP_STATE.sidebarOpen = force;
   } else {
     APP_STATE.sidebarOpen = !APP_STATE.sidebarOpen;
   }
   sidebar.classList.toggle('open', APP_STATE.sidebarOpen);
+  backdrop.classList.toggle('open', APP_STATE.sidebarOpen);
 }
 
-function toggleRightPanel() {
-  const panel = document.getElementById('right-panel');
-  APP_STATE.rightPanelOpen = !APP_STATE.rightPanelOpen;
-  panel.classList.toggle('open', APP_STATE.rightPanelOpen);
-  if (APP_STATE.rightPanelOpen) renderRightPanel();
+// Commentary & Context is a bottom-sheet modal (not a right-side push
+// panel anymore) — reuses the same showModal(..., true) system as the
+// app's other bottom sheets, so it slides up from the bottom.
+function openCommentaryPanel() {
+  if (APP_STATE.rightPanelOpen) {
+    closeModal();
+    APP_STATE.rightPanelOpen = false;
+    return;
+  }
+  APP_STATE.rightPanelOpen = true;
+  showModal(`
+    <div class="sheet-handle"></div>
+    <div style="display:flex;align-items:center;padding:4px 20px 8px;gap:8px;">
+      <span class="material-icons-round" style="color:var(--md-secondary);">library_books</span>
+      <span style="font-size:16px;font-weight:700;color:var(--md-on-surface);">Commentary & Context</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" onclick="closeCommentaryPanel()" style="color:var(--md-on-surface-variant);width:36px;height:36px;">
+        <span class="material-icons-round" style="font-size:20px;">close</span>
+      </button>
+    </div>
+    <div class="tab-bar" id="right-tabs">
+      <div class="tab-item${APP_STATE.rightSubTab === 'commentary' ? ' active' : ''}" onclick="switchRightTab('commentary',this)">Commentary</div>
+      <div class="tab-item${APP_STATE.rightSubTab === 'context' ? ' active' : ''}" onclick="switchRightTab('context',this)">Context</div>
+      <div class="tab-item${APP_STATE.rightSubTab === 'crossrefs' ? ' active' : ''}" onclick="switchRightTab('crossrefs',this)">Cross-Refs</div>
+    </div>
+    <div id="right-panel-content" class="sheet-body"></div>
+  `, true);
+  const card = document.querySelector('#active-modal .bottom-sheet');
+  if (card) card.classList.add('commentary-sheet');
+  renderRightPanel();
+}
+
+function closeCommentaryPanel() {
+  closeModal();
+  APP_STATE.rightPanelOpen = false;
 }
 
 // ============================================================
@@ -2723,6 +2858,75 @@ function showModal(content, isSheet = false) {
   });
   modals.innerHTML = '';
   modals.appendChild(overlay);
+  if (isSheet) makeSheetDraggable(card);
+}
+
+// Global drag-to-resize for every bottom-sheet modal: dragging the handle
+// adjusts the sheet's height directly, and once it's dragged past 3/4 of
+// the screen it snaps the rest of the way to full height automatically.
+function makeSheetDraggable(card) {
+  const handle = card.querySelector('.sheet-handle');
+  if (!handle) return;
+  handle.style.cursor = 'grab';
+  handle.style.touchAction = 'none';
+
+  const MIN_HEIGHT = 160; // px — floor while actively dragging (above the close threshold)
+  let dragging = false;
+  let startY = 0;
+  let startHeight = 0;
+
+  const getY = (e) => (e.touches ? e.touches[0].clientY : e.clientY);
+
+  function stopListening() {
+    document.removeEventListener('touchmove', onMove);
+    document.removeEventListener('touchend', onEnd);
+    document.removeEventListener('mousemove', onMove);
+    document.removeEventListener('mouseup', onEnd);
+  }
+
+  function onMove(e) {
+    if (!dragging) return;
+    if (e.cancelable) e.preventDefault();
+    const maxHeight = window.innerHeight;
+    const delta = startY - getY(e);
+    const rawHeight = startHeight + delta;
+
+    // Dragged down past 1/4 of the screen height — close right away,
+    // don't wait for release.
+    if (rawHeight <= maxHeight * 0.25) {
+      dragging = false;
+      card.style.transition = '';
+      stopListening();
+      closeModal();
+      return;
+    }
+
+    let newHeight = Math.max(MIN_HEIGHT, Math.min(maxHeight, rawHeight));
+    // Snap to full screen once dragged past 3/4 of the viewport height
+    if (newHeight >= maxHeight * 0.75) newHeight = maxHeight;
+    card.style.height = newHeight + 'px';
+    card.style.maxHeight = '100vh';
+  }
+
+  function onEnd() {
+    dragging = false;
+    card.style.transition = '';
+    stopListening();
+  }
+
+  function onStart(e) {
+    dragging = true;
+    startY = getY(e);
+    startHeight = card.getBoundingClientRect().height;
+    card.style.transition = 'none';
+    document.addEventListener('touchmove', onMove, {passive: false});
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onEnd);
+  }
+
+  handle.addEventListener('touchstart', onStart, {passive: true});
+  handle.addEventListener('mousedown', onStart);
 }
 
 function closeModal() {
@@ -2790,18 +2994,9 @@ function navigateToRef(bookId, verseRef) {
 // RESPONSIVE HANDLER
 // ============================================================
 window.addEventListener('resize', () => {
-  if (window.innerWidth >= 768) {
-    if (!APP_STATE.sidebarOpen) {
-      document.getElementById('sidebar').classList.add('open');
-      APP_STATE.sidebarOpen = true;
-    }
-  }
-  if (window.innerWidth >= 1024) {
-    if (!APP_STATE.rightPanelOpen) {
-      document.getElementById('right-panel').classList.add('open');
-      APP_STATE.rightPanelOpen = true;
-    }
-  }
+  // Sidebar open/close and the Commentary & Context modal are both now
+  // deliberate user actions at every screen width, so we no longer force
+  // either back open on resize.
 });
 
 // ============================================================
